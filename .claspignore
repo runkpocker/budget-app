@@ -1,0 +1,17 @@
+# Ignore everything by default
+**/**
+
+# But allow all script and HTML files
+!**/*.gs
+!**/*.js
+!**/*.html
+
+# Allow this folder structure (if any subfolders)
+!/**/
+
+# Optional: include any specific folders you do want to sync
+!client/**
+!server/**
+
+# Finally, allow manifest only if you explicitly un-comment next line
+!appsscript.json

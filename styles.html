@@ -1,0 +1,166 @@
+<!-- styles.html :: Button Bunny Soft Mid‑tone (Darker Pastels for Buttons, Headers, Popups) -->
+<style>
+:root {
+  /* Soft mid‑tone earthy palette with slightly darker accents */
+  --mustard:    #EAD999;
+  --sunset:     #F4D1C4;
+  --terracotta: #F0BBA9;
+  --rust:       #C89076;
+  --sage:       #E3E7D5;
+  --olive:      #A6AD66;  /* darker olive for stronger focus */
+
+  /* App tokens */
+  --bg: #EDE9E3;
+  --panel: #F7F4EE;
+  --muted: #8A857A;
+  --text: #3E3A33;
+  --overlay: rgba(0, 0, 0, 0.20);
+  --panel-border: #DDD4C6;
+  --accent: var(--olive);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+body {
+  font-family: "Book Antiqua", Palatino, "Palatino Linotype", serif;
+  font-size: 14px;
+  line-height: 1.4;
+  background: var(--bg);
+  color: var(--text);
+}
+
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ---------- Layout ---------- */
+.container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+.app-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.app-header h1 { margin: 0; font-size: 24px; }
+.app-header .sub { color: var(--muted); }
+.cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+.card h2 {
+  margin: 0 0 12px 0;
+  background: #E4DECF; /* slightly darker pastel header */
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+.form input,
+.form select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* ---------- Buttons ---------- */
+button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: #E4DECF; /* darker pastel for better contrast */
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+button:hover {
+  border-color: var(--accent);
+  background: #DBD3C2;
+}
+
+/* “Good Girrrrrl ✨” animation (same behavior, slightly darker glow) */
+button.busy {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 0 rgba(166, 173, 102, 0.35);
+  animation: btn-pulse 1100ms ease-in-out infinite,
+             btn-wiggle 1200ms ease-in-out infinite;
+}
+@keyframes btn-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(166, 173, 102, 0.35); }
+  70%  { box-shadow: 0 0 12px 6px rgba(166, 173, 102, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(166, 173, 102, 0); }
+}
+@keyframes btn-wiggle {
+  0%   { transform: translateY(-1px) rotate(0deg); }
+  30%  { transform: translateY(-1px) rotate(-1.5deg); }
+  60%  { transform: translateY(-1px) rotate(1.5deg); }
+  100% { transform: translateY(-1px) rotate(0deg); }
+}
+
+/* ---------- Misc ---------- */
+.status { color: var(--muted); margin-left: 8px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--panel);
+  border-radius: 12px;
+  overflow: hidden;
+}
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--panel-border); }
+th { background: #E4DECF; text-align: left; } /* same tone as card header */
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+/* ---------- Modal ---------- */
+.hidden { display: none !important; }
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--overlay);
+  z-index: 9999;
+  backdrop-filter: saturate(1.1);
+}
+.modal-panel {
+  background: #EDE7DC; /* darker pastel popup */
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  min-width: min(520px, 92vw);
+  padding: 20px 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+.bunny {
+  font-size: 34px;
+  line-height: 1;
+  animation: bunny-hop 900ms cubic-bezier(.2, .7, .3, 1) infinite;
+}
+.modal-text {
+  font-size: 15px;
+  color: var(--text);
+}
+@keyframes bunny-hop {
+  0%   { transform: translateY(0) scale(1); }
+  30%  { transform: translateY(-6px) scale(1.05); }
+  55%  { transform: translateY(0) scale(1); }
+  75%  { transform: translateY(-3px) scale(1.03); }
+  100% { transform: translateY(0); }
+}
+</style>

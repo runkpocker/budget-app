@@ -1,0 +1,219 @@
+<script>
+// ---------- Helpers ----------
+const qs = (id) => document.getElementById(id);
+
+// ---------- Modal controls ----------
+function showBusy() {
+  const m = qs('busyModal');
+  if (m) m.classList.remove('hidden');
+}
+function hideBusy() {
+  const m = qs('busyModal');
+  if (m) m.classList.add('hidden');
+}
+
+// ---------- Table renderer ----------
+function renderTable(el, rows) {
+  const tbl = typeof el === 'string' ? qs(el) : el;
+  tbl.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    tbl.innerHTML = '<tr><td><em>No data</em></td></tr>';
+    return;
+  }
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    r.forEach((c) => {
+      const cell = document.createElement(i === 0 ? 'th' : 'td');
+      cell.textContent = c;
+      tr.appendChild(cell);
+    });
+    tbl.appendChild(tr);
+  });
+}
+
+// ---------- Init ----------
+function init() {
+  const btn = qs('btnApplyMonth');
+  if (btn) btn.addEventListener('click', applyMonth);
+
+  // Start clean: no month selected, no data tables populated
+  renderTable('tblActVsBud', []);
+  renderTable('tblIncome', []);
+  renderTable('tblExpense', []);
+}
+
+// ---------- Apply month fetch ----------
+function applyMonth() {
+  const iso = qs('isoMonth')?.value; // YYYY-MM
+  const status = qs('monthStatus');
+  const btn = qs('btnApplyMonth');
+
+  if (!iso) {
+    if (status) status.textContent = 'Pick a month first.';
+    return;
+  }
+
+  // Set animated “Good Girrrrrl ✨” state
+  if (btn) {
+    btn.textContent = 'Good Girrrrrl ✨';
+    btn.classList.add('busy');
+  }
+  if (status) status.textContent = '';
+  showBusy();
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      try {
+        if (status) status.textContent = `✓ Set to ${res.b4}`;
+        renderTable('tblActVsBud', res.actVsBud);
+        renderTable('tblIncome', res.income);
+        renderTable('tblExpense', res.expense);
+      } finally {
+        // Restore button & hide modal
+        if (btn) {
+          btn.textContent = 'Set Month';
+          btn.classList.remove('busy');
+        }
+        hideBusy();
+      }
+    })
+    .withFailureHandler((err) => {
+      if (status)
+        status.textContent =
+          '⚠ ' + (err && err.message ? err.message : 'Failed to fetch');
+      if (btn) {
+        btn.textContent = 'Set Month';
+        btn.classList.remove('busy');
+      }
+      hideBusy();
+    })
+    .setSummaryMonthFromIso(iso);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  let txPage = 1;
+  const pageSize = 50;
+
+  function normalizeMonthStr(s) {
+    const m = String(s || '').trim();
+    const mm = m.match(/^(\d{4})[-\/.](\d{1,2})$/);
+    return mm ? `${mm[1]}-${mm[2].padStart(2,'0')}` : m;
+  }
+  function currentMonthISO(){ return normalizeMonthStr(window.__summaryMonth || ''); }
+
+  function renderTable(el, rows, cols) {
+    if (!el) return;
+    if (!rows || !rows.length) { el.innerHTML = '<tbody><tr><td class="muted" colspan="'+cols.length+'">No rows</td></tr></tbody>'; return; }
+    const thead = '<thead><tr>' + cols.map(c=>`<th>${c.label}</th>`).join('') + '</tr></thead>';
+    const tbody = '<tbody>' + rows.map(r => '<tr>' + cols.map(c=>`<td>${(r[c.key]??'')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+    el.innerHTML = thead + tbody;
+  }
+
+  function refreshBudgets(){
+    const month = currentMonthISO();
+    const el = $('dxBudgets'); const info = $('dxPageInfo');
+    if (!el) return;
+    if (!month){ if(info) info.textContent=' Set summary month first.'; el.innerHTML=''; return; }
+    google.script.run
+      .withSuccessHandler(res => { renderTable(el, res.rows, [
+        {key:'Month',label:'Month'}, {key:'Type',label:'Type'}, {key:'Category',label:'Category'}, {key:'Budget',label:'Budget'}
+      ]); })
+      .withFailureHandler(e => { if(info) info.textContent='Error: '+(e?.message||e); })
+      .getBudgetView({ month });
+  }
+
+  function refreshTransactions(){
+    const month = currentMonthISO();
+    const el = $('dxTx'); const info = $('dxPageInfo');
+    if (!el) return;
+    if (!month){ if(info) info.textContent=' Set summary month first.'; el.innerHTML=''; return; }
+    const type = ($('dxType')||{}).value || '';
+    const category = ($('dxCat')||{}).value || '';
+    google.script.run
+      .withSuccessHandler(res => {
+        if (info) info.textContent = ` Page ${res.page} of ${res.pages} — ${res.total} rows `;
+        renderTable(el, res.rows, [
+          {key:'DateISO',label:'Date'},{key:'Account',label:'Account'},{key:'Type',label:'Type'},
+          {key:'Category',label:'Category'},{key:'Amount',label:'Amount'},{key:'Description',label:'Description'}
+        ]);
+        txPage = res.page;
+      })
+      .withFailureHandler(e => { if(info) info.textContent='Error: '+(e?.message||e); })
+      .getTransactionView({ month, type, category, page: txPage, pageSize });
+  }
+
+  window.refreshDataExplorerAll = function(){ try{ txPage=1; refreshBudgets(); refreshTransactions(); }catch(e){ console.warn(e);} };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const ref = $('dxRefresh'); if (ref) ref.addEventListener('click', window.refreshDataExplorerAll);
+    const t = $('dxType'); if (t) t.addEventListener('change', ()=>{ txPage=1; refreshTransactions(); });
+    const c = $('dxCat'); if (c) c.addEventListener('change', ()=>{ txPage=1; refreshTransactions(); });
+    const p = $('dxPrev'); if (p) p.addEventListener('click', ()=>{ if (txPage>1){ txPage--; refreshTransactions(); }});
+    const n = $('dxNext'); if (n) n.addEventListener('click', ()=>{ txPage++; refreshTransactions(); });
+    if (window.__summaryMonth) window.refreshDataExplorerAll();
+  });
+})();
+</script>
+
+
+<script>
+/* EXPLORER MONTH LINKED TO SUMMARY */
+function currentMonthISO() {
+  const v = (window.__summaryMonth || '').trim();
+  const mm = v.match(/^(\d{4})[-\/.](\d{1,2})$/);
+  return mm ? `${mm[1]}-${String(mm[2]).padStart(2,'0')}` : v;
+}
+
+window.refreshDataExplorerAll = function () {
+  try { 
+    if (!currentMonthISO()) return;
+    if (typeof txPage === 'number') txPage = 1;
+    if (typeof refreshBudgets === 'function') refreshBudgets();
+    if (typeof refreshTransactions === 'function') refreshTransactions();
+  } catch (e) { console.warn('refreshDataExplorerAll:', e); }
+};
+
+document.addEventListener('summary-month-set', (e) => {
+  window.__summaryMonth = (e.detail && e.detail.month) ? e.detail.month : window.__summaryMonth;
+  const badge = document.getElementById('dxMonthBadge');
+  if (badge && window.__summaryMonth) badge.textContent = 'Month: ' + window.__summaryMonth;
+  window.refreshDataExplorerAll();
+});
+</script>
+
+<script>
+/* SUMMARY MONTH EVENT BRIDGE */
+function currentMonthISO() {
+  var v = (window.__summaryMonth || '').trim();
+  var m = v.match(/^(\d{4})[-\/.](\d{1,2})$/);
+  return m ? (m[1] + '-' + String(m[2]).padStart(2,'0')) : v;
+}
+
+window.refreshDataExplorerAll = function () {
+  try {
+    var month = currentMonthISO();
+    if (!month) return;
+    if (typeof txPage === 'number') txPage = 1;
+    if (typeof refreshBudgets === 'function') refreshBudgets();
+    if (typeof refreshTransactions === 'function') refreshTransactions();
+  } catch(e){ console.warn('refreshDataExplorerAll:', e); }
+};
+
+document.addEventListener('summary-month-set', function(e){
+  var iso = e.detail && e.detail.month ? e.detail.month : '';
+  if (iso) {
+    window.__summaryMonth = iso;
+    var badge = document.getElementById('dxMonthBadge');
+    if (badge) badge.textContent = 'Month: ' + iso;
+    if (e.detail && e.detail.includeTx && typeof window.refreshDataExplorerAll === 'function') {
+      window.refreshDataExplorerAll();
+    }
+  }
+});
+</script>

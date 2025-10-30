@@ -1,0 +1,157 @@
+<?!= include('styles'); ?>
+<div class="container">
+  <header class="app-header">
+    <h1>🐰 Bunny Balut Budget</h1>
+    <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
+  </header>
+
+  <!-- Busy / progress modal -->
+  <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
+    <div class="modal-panel">
+      <div class="bunny" aria-hidden="true">🐰</div>
+      <div class="modal-text">Hang on to your Bunny Hairs, Daddy is getting the info...</div>
+    </div>
+  </div>
+
+  <section class="cards">
+    <div class="card">
+      <h2>Summary</h2>
+      <div class="row">
+        <label for="isoMonth">Month</label>
+        <input type="month" id="isoMonth" />
+        <button id="btnApplyMonth">Set Month</button> <label class="inline" style="margin-left:8px;"><input type="checkbox" id="includeTx" checked> Include Transactions</label>
+        <span id="monthStatus" class="status"></span>
+      </div>
+
+      <div id="summaryArea" class="grid" style="margin-top:10px">
+        <div><h3>Actual vs Budget</h3><table id="tblActVsBud"></table></div>
+        <div><h3>Income</h3><table id="tblIncome"></table></div>
+        <div><h3>Expense</h3><table id="tblExpense"></table></div>
+      </div>
+    </div>
+  </section>
+
+  
+    <div class="card">
+      <h2>Bunny Data Explorer</h2>
+      <div class="row"><span id="dxMonthBadge" class="chip">Month: not set</span></div>
+
+      <div class="row">
+        <label for="dxType">Type</label>
+        <select id="dxType"></select>
+        <label for="dxCat">Category</label>
+        <select id="dxCat"></select>
+        <button id="dxRefresh">Get Transactions</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <strong>Budget</strong>
+      </div>
+      <table id="dxBudgets"></table>
+
+      <div class="row" style="margin-top:16px">
+        <strong>Transactions</strong>
+        <span id="dxPageInfo" class="status"></span>
+        <span style="margin-left:auto"></span>
+        <button id="dxPrev">Prev</button>
+        <button id="dxNext">Next</button>
+      </div>
+      <table id="dxTx"></table>
+    </div>
+
+
+  <?!= include('client'); ?>
+</div>
+
+<!-- SUMMARY->EXPLORER BRIDGE -->
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  const btn  = $('btnApplyMonth') || $('applyButton');
+  const iMonth = $('isoMonth') || $('monthSelect');
+  const status = $('monthStatus');
+  if (!btn) return;
+
+  function readMonthISO() {
+    if (!iMonth) return '';
+    if (iMonth.type === 'month') return iMonth.value || '';
+    const mm = String(iMonth.value || '').padStart(2, '0');
+    const yyyy = new Date().getFullYear();
+    return mm ? `${yyyy}-${mm}` : '';
+  }
+
+  btn.addEventListener('click', () => {
+    const iso = readMonthISO();
+    if (!iso) { alert('Please select a month first.'); return; }
+
+    const prev = btn.textContent;
+    btn.textContent = 'Good Girrrrrl ✨';
+    btn.classList.add('busy');
+    const modal = $('busyModal');
+    if (modal) modal.classList.remove('hidden');
+    if (status) status.textContent = '';
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        btn.textContent = prev;
+        btn.classList.remove('busy');
+        if (modal) modal.classList.add('hidden');
+        if (status) status.textContent = `Updated to ${iso}`;
+
+        const norm = iso.replace(/^(\d{4})[-\/.](\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2,'0')}`);
+        window.__summaryMonth = norm;
+        const badge = document.getElementById('dxMonthBadge');
+        if (badge) badge.textContent = 'Month: ' + norm;
+        document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: norm } }));
+        if (typeof window.refreshDataExplorerAll === 'function') window.refreshDataExplorerAll();
+      })
+      .withFailureHandler((err) => {
+        btn.textContent = prev;
+        btn.classList.remove('busy');
+        if (modal) modal.classList.add('hidden');
+        const msg = (err && err.message) ? err.message : 'Unknown error';
+        if (status) status.textContent = 'Error: ' + msg;
+        alert('Set Month failed: ' + msg);
+      })
+      .setSummaryMonthFromIso(iso);
+  });
+})();
+</script>
+
+<!-- SUMMARY->EXPLORER MUTATION BRIDGE -->
+<script>
+(function(){ 
+  function setExplorerMonth(iso){ 
+    // store
+    window.__summaryMonth = iso;
+    // badge
+    var badge = document.getElementById('dxMonthBadge');
+    if (badge) badge.textContent = 'Month: ' + iso;
+    // includeTx?
+    var includeTxEl = document.getElementById('includeTx');
+    var includeTx = !!(includeTxEl && includeTxEl.checked);
+    // broadcast
+    try { document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: iso, includeTx: includeTx } })); } catch(e) {}
+    // optional auto fetch
+    if (includeTx && typeof window.refreshDataExplorerAll === 'function') { window.refreshDataExplorerAll(); }
+  }
+  function tryExtractISO(text){ 
+    var m = String(text||'').match(/(\d{4})-(\d{2})/);
+    return m ? (m[1] + '-' + m[2]) : '';
+  }
+  function installObserver(){ 
+    var status = document.getElementById('monthStatus');
+    if (!status) return;
+    var lastIso = null;
+    var obs = new MutationObserver(function(){ 
+      var t = status.textContent || status.innerText || '';
+      var iso = tryExtractISO(t);
+      if (iso && iso !== lastIso){ lastIso = iso; setExplorerMonth(iso); }
+    });
+    obs.observe(status, { childList: true, subtree: true, characterData: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installObserver);
+  else installObserver();
+})();
+</script>

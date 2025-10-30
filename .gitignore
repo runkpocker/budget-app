@@ -1,0 +1,8 @@
+# Google/clasp credentials and local settings
+.clasp.json
+
+# Node.js dependencies (if you ever use them)
+node_modules/
+
+# VS Code settings
+.vscode/
