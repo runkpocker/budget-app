@@ -93,19 +93,28 @@
     if (status) status.textContent = '';
 
     google.script.run
-      .withSuccessHandler((res) => {
-        btn.textContent = prev;
-        btn.classList.remove('busy');
-        if (modal) modal.classList.add('hidden');
-        if (status) status.textContent = `Updated to ${iso}`;
+.withSuccessHandler((res) => {
+  btn.textContent = prev;
+  btn.classList.remove('busy');
+  if (modal) modal.classList.add('hidden');
 
-        const norm = iso.replace(/^(\d{4})[-\/.](\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2,'0')}`);
-        window.__summaryMonth = norm;
-        const badge = document.getElementById('dxMonthBadge');
-        if (badge) badge.textContent = 'Month: ' + norm;
-        document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: norm } }));
-        if (typeof window.refreshDataExplorerAll === 'function') window.refreshDataExplorerAll();
-      })
+  // --- START NEW/MERGED CODE ---
+  if (status) status.textContent = `✓ Set to ${res.b4}`;
+
+  // Render the summary tables (from the function we deleted)
+  if (typeof renderTable === 'function') {
+    renderTable('tblActVsBud', res.actVsBud);
+    renderTable('tblIncome', res.income);
+    renderTable('tblExpense', res.expense);
+  }
+
+// Bridge to Data Explorer
+const norm = iso.replace(/^(\d{4})[-\/.](\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2,'0')}`);
+const includeTx = !!(document.getElementById('includeTx') && document.getElementById('includeTx').checked);
+
+// Fire ONE event that other scripts can listen for
+document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: norm, includeTx: includeTx } }));
+})
       .withFailureHandler((err) => {
         btn.textContent = prev;
         btn.classList.remove('busy');
@@ -119,39 +128,3 @@
 })();
 </script>
 
-<!-- SUMMARY->EXPLORER MUTATION BRIDGE -->
-<script>
-(function(){ 
-  function setExplorerMonth(iso){ 
-    // store
-    window.__summaryMonth = iso;
-    // badge
-    var badge = document.getElementById('dxMonthBadge');
-    if (badge) badge.textContent = 'Month: ' + iso;
-    // includeTx?
-    var includeTxEl = document.getElementById('includeTx');
-    var includeTx = !!(includeTxEl && includeTxEl.checked);
-    // broadcast
-    try { document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: iso, includeTx: includeTx } })); } catch(e) {}
-    // optional auto fetch
-    if (includeTx && typeof window.refreshDataExplorerAll === 'function') { window.refreshDataExplorerAll(); }
-  }
-  function tryExtractISO(text){ 
-    var m = String(text||'').match(/(\d{4})-(\d{2})/);
-    return m ? (m[1] + '-' + m[2]) : '';
-  }
-  function installObserver(){ 
-    var status = document.getElementById('monthStatus');
-    if (!status) return;
-    var lastIso = null;
-    var obs = new MutationObserver(function(){ 
-      var t = status.textContent || status.innerText || '';
-      var iso = tryExtractISO(t);
-      if (iso && iso !== lastIso){ lastIso = iso; setExplorerMonth(iso); }
-    });
-    obs.observe(status, { childList: true, subtree: true, characterData: true });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installObserver);
-  else installObserver();
-})();
-</script>

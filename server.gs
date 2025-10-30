@@ -163,7 +163,7 @@ function getCurrentMonthIso() {
 const SHEET_BUDGETS = 'Budget';
 const SHEET_TRANSACTIONS = 'Transactions';
 const BUDGET_HEADERS = ['Month','Type','Category','Budget'];
-const TX_HEADERS     = ['Date','Account','Type','Category','Amount','Description'];
+const TX_HEADERS     = ['Date','Account','Type','Category','Description','Amount'];
 
 function readSheetObjects_(sheetName) {
   const sh = _ss().getSheetByName(sheetName);
@@ -215,12 +215,15 @@ function getBudgetView(args) {
   const missing = BUDGET_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Budget sheet missing headers: ' + missing.join(', '));
 
-  const mapped = rows.map(r => ({
-    Month: asYYYYMM_(r.Month),
-    Type: String(r.Type||''),
-    Category: String(r.Category||''),
-    Budget: Number(r.Budget)
-  }));
+const mapped = rows.map(r => {
+    const budgetStr = String(r.Budget || '').replace(/,/g, '');
+    return {
+      Month: asYYYYMM_(r.Month),
+      Type: String(r.Type||''),
+      Category: String(r.Category||''),
+      Budget: Number(budgetStr)
+    };
+  });
 
   const filtered = mapped.filter(r =>
     (!month || r.Month === month) &&
@@ -243,19 +246,39 @@ function getTransactionView(args) {
   const missing = TX_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Transactions sheet missing headers: ' + missing.join(', '));
 
-  const normalized = rows.map(r => {
+const normalized = rows.map(r => {
+    // --- START REPLACEMENT ---
+    let yyyy = '1970', mm = '01', dd = '01', yyyymm = '1970-01';
     let d = r.Date;
-    if (typeof d === 'number') d = new Date(Math.round((d - 25569) * 86400 * 1000));
-    const dateObj = d instanceof Date ? d : new Date(d);
-    const validDate = !isNaN(dateObj);
-    const yyyy = validDate ? dateObj.getFullYear() : 1970;
-    const mm = validDate ? String(dateObj.getMonth() + 1).padStart(2,'0') : '01';
-    const dd = validDate ? String(dateObj.getDate()).padStart(2,'0') : '01';
-    const amt = Number(r.Amount);
+
+    // Handle string dates like '2025-11-01' manually to avoid timezone bugs
+    if (typeof d === 'string' && d.includes('-')) {
+      const parts = d.split('T')[0].split('-'); // Get YYYY-MM-DD
+      if (parts.length === 3) {
+        yyyy = parts[0];
+        mm = parts[1].padStart(2, '0');
+        dd = parts[2].padStart(2, '0');
+        yyyymm = `${yyyy}-${mm}`;
+      }
+    } else {
+      // Fallback for Sheets numeric dates or other formats
+      if (typeof d === 'number') d = new Date(Math.round((d - 25569) * 86400 * 1000));
+      const dateObj = d instanceof Date ? d : new Date(d);
+      if (!isNaN(dateObj)) {
+        yyyy = dateObj.getFullYear();
+        mm = String(dateObj.getMonth() + 1).padStart(2,'0');
+        dd = String(dateObj.getDate()).padStart(2,'0');
+        yyyymm = `${yyyy}-${mm}`;
+      }
+    }
+
+    const amtStr = String(r.Amount || '').replace(/,/g, '');
+    const amt = Number(amtStr);
+    // --- END REPLACEMENT ---
 
     return {
       DateISO: `${yyyy}-${mm}-${dd}`,
-      Month: `${yyyy}-${mm}`,
+      Month: yyyymm, // Use the manually parsed month
       Account: String(r.Account || ''),
       Type: String(r.Type || ''),
       Category: String(r.Category || ''),
@@ -304,3 +327,55 @@ function normalizeBudgetMonthCell_(v) {
   return isNaN(d2) ? '' : Utilities.formatDate(d2, tz, 'yyyy-MM');
 }
 
+/***** === DEBUGGING FUNCTION === *****/
+
+function debugDataExplorer() {
+  Logger.log('--- STARTING DEBUG ---');
+  Logger.log('Testing with hardcoded month: 2025-11');
+  const testMonth = '2025-11';
+  
+  try {
+    // --- Test Budget Sheet ---
+    Logger.log('--- TESTING BUDGET SHEET ---');
+    const budgetRows = readSheetObjects_(SHEET_BUDGETS);
+    Logger.log('Raw Budget rows found: ' + budgetRows.length);
+    
+    if (budgetRows.length > 0) {
+      Logger.log('Raw Budget Headers: ' + JSON.stringify(Object.keys(budgetRows[0])));
+      Logger.log('Raw Budget Row 1: ' + JSON.stringify(budgetRows[0]));
+      
+      const budgetResult = getBudgetView({ month: testMonth });
+      Logger.log('Filtered Budget rows: ' + budgetResult.rows.length);
+      if (budgetResult.rows.length > 0) {
+        Logger.log('Filtered Budget Row 1: ' + JSON.stringify(budgetResult.rows[0]));
+      }
+    } else {
+      Logger.log('Budget sheet appears empty or has no data rows.');
+    }
+
+    // --- Test Transactions Sheet ---
+    Logger.log('--- TESTING TRANSACTIONS SHEET ---');
+    const txRows = readSheetObjects_(SHEET_TRANSACTIONS);
+    Logger.log('Raw Transaction rows found: ' + txRows.length);
+    
+    if (txRows.length > 0) {
+      Logger.log('Raw TX Headers: ' + JSON.stringify(Object.keys(txRows[0])));
+      Logger.log('Raw TX Row 1: ' + JSON.stringify(txRows[0]));
+      
+      const txResult = getTransactionView({ month: testMonth, page: 1, pageSize: 50 });
+      Logger.log('Filtered TX rows: ' + txResult.rows.length);
+      Logger.log('TX Total Rows: ' + txResult.total);
+      if (txResult.rows.length > 0) {
+        Logger.log('Filtered TX Row 1: ' + JSON.stringify(txResult.rows[0]));
+      }
+    } else {
+      Logger.log('Transactions sheet appears empty or has no data rows.');
+    }
+    
+  } catch (e) {
+    Logger.log('!!! DEBUG FAILED WITH ERROR !!!');
+    Logger.log(e.message);
+    Logger.log(e.stack);
+  }
+  Logger.log('--- DEBUG COMPLETE ---');
+}
