@@ -20,7 +20,7 @@
 
 * { box-sizing: border-box; }
 
-/* --- SYNTAX FIX: Removes the fatal nested body{} error --- */
+/* --- SYNTAX FIX: This must be correct to load the rest of the CSS --- */
 body {
   margin: 0;
   font-family: "Book Antiqua", Palatino, "Palatino Linotype", serif;
@@ -58,15 +58,22 @@ body {
 }
 .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
 
-/* --- PRESENTATION FIX: New Flexbox layout for Summary tables --- */
-.summary-flex { 
+/* --- SUMMARY ALIGNMENT FIX: Robust Flexbox ensures alignment --- */
+.summary-flex-final { 
   display: flex; 
   gap: 12px; 
   width: 100%;
 }
-.summary-flex > div {
-  flex: 1 1 0; /* Ensures all three columns take up equal space */
+.summary-flex-final > .summary-col {
+  flex: 1 1 0; /* Ensures all three columns take up equal space and align perfectly */
 }
+
+/* Original .grid class used for other sections (like the main two cards) */
+.grid { 
+  display: grid; 
+  gap: 12px; 
+  grid-template-columns: repeat(3, 1fr); 
+} 
 
 .form input,
 .form select {
@@ -127,15 +134,13 @@ table {
 th, td { padding: 8px 10px; border-bottom: 1px solid var(--panel-border); }
 th { background: #E4DECF; text-align: left; } /* same tone as card header */
 
-/* --- Cleaned up original .grid, removing the conflicting rule --- */
-.grid { 
-  display: grid; 
-  gap: 12px; 
-  grid-template-columns: repeat(3, 1fr); 
-} 
+/* Responsive design for summary on small screens */
 @media (max-width: 900px) { 
-  .summary-flex {
-    flex-direction: column;
+  .cards { 
+    grid-template-columns: 1fr; /* Stack main cards */
+  }
+  .summary-flex-final {
+    flex-direction: column; /* Stack summary columns */
   }
 }
 
