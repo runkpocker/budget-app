@@ -51,6 +51,35 @@ document.addEventListener('DOMContentLoaded', init);
   let txPage = 1;
   const pageSize = 50;
 
+  // --- START NEW HELPER FUNCTION ---
+  /**
+   * Populates a <select> dropdown with a list of items.
+   * @param {string} elId The ID of the <select> element.
+   * @param {string[]} items An array of strings to use as options.
+   * @param {string} defaultLabel The text for the default (value="") option.
+   */
+  function populateSelect(elId, items, defaultLabel = 'All') {
+    const el = $(elId);
+    if (!el) return;
+    el.innerHTML = ''; // Clear existing options
+
+    // Add the default "All" option
+    const defOpt = document.createElement('option');
+    defOpt.value = '';
+    defOpt.textContent = `— ${defaultLabel} —`;
+    el.appendChild(defOpt);
+
+    // Add items from the server
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      el.appendChild(opt);
+    });
+  }
+  // --- END NEW HELPER FUNCTION ---
+
+
   function normalizeMonthStr(s) {
     const m = String(s || '').trim();
     const mm = m.match(/^(\d{4})[-\/.](\d{1,2})$/);
@@ -108,6 +137,20 @@ document.addEventListener('DOMContentLoaded', init);
     const p = $('dxPrev'); if (p) p.addEventListener('click', ()=>{ if (txPage>1){ txPage--; refreshTransactions(); }});
     const n = $('dxNext'); if (n) n.addEventListener('click', ()=>{ txPage++; refreshTransactions(); });
     if (window.__summaryMonth) window.refreshDataExplorerAll();
+
+    // --- START NEW CODE TO POPULATE DROPDOWNS ---
+    // Fetch the Type list and populate the dropdown
+    google.script.run
+      .withSuccessHandler(items => populateSelect('dxType', items, 'All Types'))
+      .withFailureHandler(err => console.error('Failed to load types: ' + (err.message || err)))
+      .listTypes();
+    
+    // Fetch the Category list and populate the dropdown
+    google.script.run
+      .withSuccessHandler(items => populateSelect('dxCat', items, 'All Categories'))
+      .withFailureHandler(err => console.error('Failed to load categories: ' + (err.message || err)))
+      .listCategories();
+    // --- END NEW CODE TO POPULATE DROPDOWNS ---
   });
 })();
 </script>

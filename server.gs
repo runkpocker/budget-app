@@ -1,6 +1,5 @@
 // Bunny Balut Budget — "Button Bunny" (single page, validated month setter)
 const SPREADSHEET_ID = '1-KZorvFCZi-Ic7a54hx4p2s0fqM6LHt_wVcSQkxAS6c';
-
 // Serve single-page app (index.html)
 function doGet(e) {
   try {
@@ -41,15 +40,14 @@ function setSummaryMonthFromIso(isoYYYYMM) {
     throw new Error('Expected YYYY-MM (e.g., 2025-10)');
   }
   const [yStr, mStr] = isoYYYYMM.split('-');
-  const y = Number(yStr), m = Number(mStr); // 1..12
+  const y = Number(yStr), m = Number(mStr);
+  // 1..12
   if (!(y > 1900 && m >= 1 && m <= 12)) throw new Error('Invalid month');
-
   const sh = _ss().getSheetByName('Summary');
   if (!sh) throw new Error('Summary sheet not found');
 
   const b4 = sh.getRange('B4');
   const dv = b4.getDataValidation();
-
   // Normalize value to YYYY-MM for matching (handles dates, strings, "Oct 2025", etc.)
   const monthKey = (v) => {
     if (v instanceof Date && !isNaN(v)) {
@@ -72,20 +70,17 @@ function setSummaryMonthFromIso(isoYYYYMM) {
     if (!isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
     return null;
   };
-
   const targetKey = `${y}-${String(m).padStart(2,'0')}`;
 
   if (dv) {
     const type = dv.getCriteriaType();
     const args = dv.getCriteriaValues();
-
     // Validation: allowed range
     if (type === SpreadsheetApp.DataValidationCriteria.VALUE_IN_RANGE) {
       const rng = args[0];
       if (rng) {
         const vals = rng.getValues();
         const disps = rng.getDisplayValues();
-
         // Prefer raw values
         for (let i = 0; i < vals.length; i++) {
           if (monthKey(vals[i][0]) === targetKey) {
@@ -136,7 +131,6 @@ function getCurrentMonthIso() {
   if (!sh) return { iso: '' };
   const raw = sh.getRange('B4').getValue();
   const disp = sh.getRange('B4').getDisplayValue();
-
   const toIso = (v) => {
     if (v instanceof Date && !isNaN(v)) {
       return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2,'0')}`;
@@ -155,7 +149,6 @@ function getCurrentMonthIso() {
     }
     return '';
   };
-
   return { iso: toIso(raw) || toIso(disp) || '' };
 }
 
@@ -164,7 +157,6 @@ const SHEET_BUDGETS = 'Budget';
 const SHEET_TRANSACTIONS = 'Transactions';
 const BUDGET_HEADERS = ['Month','Type','Category','Budget'];
 const TX_HEADERS     = ['Date','Account','Type','Category','Description','Amount'];
-
 function readSheetObjects_(sheetName) {
   const sh = _ss().getSheetByName(sheetName);
   if (!sh) throw new Error('Missing sheet: ' + sheetName);
@@ -193,19 +185,34 @@ function asYYYYMM_(v) {
   return '';
 }
 
+// --- START REPLACEMENT ---
 function listCategories() {
-  const tx = readSheetObjects_(SHEET_TRANSACTIONS);
-  const b  = readSheetObjects_(SHEET_BUDGETS);
-  const set = new Set([...tx.map(r => r.Category), ...b.map(r => r.Category)].filter(Boolean));
-  return Array.from(set).sort();
+  try {
+    const ss = _ss();
+    const inc = ss.getRangeByName('IncomeCats').getValues().flat();
+    const exp = ss.getRangeByName('ExpenseCats').getValues().flat();
+    
+    // Combine, filter out blanks, get unique, and sort
+    const set = new Set([...inc, ...exp].filter(Boolean));
+    return Array.from(set).sort();
+    
+  } catch (e) {
+    Logger.log('Error in listCategories: ' + e.message);
+    // Fallback to old method if named ranges fail
+    const tx = readSheetObjects_(SHEET_TRANSACTIONS);
+    const b  = readSheetObjects_(SHEET_BUDGETS);
+    const set = new Set([...tx.map(r => r.Category), ...b.map(r => r.Category)].filter(Boolean));
+    return Array.from(set).sort();
+  }
 }
 
 function listTypes() {
-  const tx = readSheetObjects_(SHEET_TRANSACTIONS);
-  const b  = readSheetObjects_(SHEET_BUDGETS);
-  const set = new Set([...tx.map(r => r.Type), ...b.map(r => r.Type)].filter(Boolean));
-  return Array.from(set).sort();
+  // Your setup script hardcodes these validation lists.
+  // So, the web app should return the same hardcoded list.
+  // This is the "source of truth" for what is allowed.
+  return ['Expense', 'Income', 'Transfer'];
 }
+// --- END REPLACEMENT ---
 
 function getBudgetView(args) {
   args = args || {};
@@ -214,8 +221,7 @@ function getBudgetView(args) {
   const headers = Object.keys(rows[0] || {});
   const missing = BUDGET_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Budget sheet missing headers: ' + missing.join(', '));
-
-const mapped = rows.map(r => {
+  const mapped = rows.map(r => {
     const budgetStr = String(r.Budget || '').replace(/,/g, '');
     return {
       Month: asYYYYMM_(r.Month),
@@ -224,12 +230,10 @@ const mapped = rows.map(r => {
       Budget: Number(budgetStr)
     };
   });
-
   const filtered = mapped.filter(r =>
     (!month || r.Month === month) &&
     r.Month && r.Type && Number.isFinite(r.Budget)
   );
-
   return { rows: filtered };
 }
 
@@ -245,8 +249,7 @@ function getTransactionView(args) {
   const headers = Object.keys(rows[0] || {});
   const missing = TX_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Transactions sheet missing headers: ' + missing.join(', '));
-
-const normalized = rows.map(r => {
+  const normalized = rows.map(r => {
     // --- START REPLACEMENT ---
     let yyyy = '1970', mm = '01', dd = '01', yyyymm = '1970-01';
     let d = r.Date;
@@ -256,6 +259,7 @@ const normalized = rows.map(r => {
       const parts = d.split('T')[0].split('-'); // Get YYYY-MM-DD
       if (parts.length === 3) {
         yyyy = parts[0];
+       
         mm = parts[1].padStart(2, '0');
         dd = parts[2].padStart(2, '0');
         yyyymm = `${yyyy}-${mm}`;
@@ -265,14 +269,16 @@ const normalized = rows.map(r => {
       if (typeof d === 'number') d = new Date(Math.round((d - 25569) * 86400 * 1000));
       const dateObj = d instanceof Date ? d : new Date(d);
       if (!isNaN(dateObj)) {
-        yyyy = dateObj.getFullYear();
+     
+           yyyy = dateObj.getFullYear();
         mm = String(dateObj.getMonth() + 1).padStart(2,'0');
         dd = String(dateObj.getDate()).padStart(2,'0');
         yyyymm = `${yyyy}-${mm}`;
       }
     }
 
-    const amtStr = String(r.Amount || '').replace(/,/g, '');
+    const amtStr = String(r.Amount ||
+ '').replace(/,/g, '');
     const amt = Number(amtStr);
     // --- END REPLACEMENT ---
 
@@ -282,22 +288,20 @@ const normalized = rows.map(r => {
       Account: String(r.Account || ''),
       Type: String(r.Type || ''),
       Category: String(r.Category || ''),
-      Amount: Number.isFinite(amt) ? amt : null,
+      Amount: Number.isFinite(amt) ?
+ amt : null,
       Description: String(r.Description || r.Note || '')
     };
   });
-
   const filtered = normalized.filter(r =>
     (!month || r.Month === month) &&
     (!type || r.Type === type) &&
     (!category || r.Category === category) &&
     r.DateISO && r.Account && r.Amount !== null
   );
-
   const total = filtered.length;
   const start = (page - 1) * pageSize;
   const slice = filtered.slice(start, start + pageSize);
-
   return { rows: slice, page, pageSize, total, pages: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
@@ -324,7 +328,8 @@ function normalizeBudgetMonthCell_(v) {
     }
   }
   const d2 = new Date(s);
-  return isNaN(d2) ? '' : Utilities.formatDate(d2, tz, 'yyyy-MM');
+  return isNaN(d2) ?
+ '' : Utilities.formatDate(d2, tz, 'yyyy-MM');
 }
 
 /***** === DEBUGGING FUNCTION === *****/
@@ -339,7 +344,6 @@ function debugDataExplorer() {
     Logger.log('--- TESTING BUDGET SHEET ---');
     const budgetRows = readSheetObjects_(SHEET_BUDGETS);
     Logger.log('Raw Budget rows found: ' + budgetRows.length);
-    
     if (budgetRows.length > 0) {
       Logger.log('Raw Budget Headers: ' + JSON.stringify(Object.keys(budgetRows[0])));
       Logger.log('Raw Budget Row 1: ' + JSON.stringify(budgetRows[0]));
@@ -357,7 +361,6 @@ function debugDataExplorer() {
     Logger.log('--- TESTING TRANSACTIONS SHEET ---');
     const txRows = readSheetObjects_(SHEET_TRANSACTIONS);
     Logger.log('Raw Transaction rows found: ' + txRows.length);
-    
     if (txRows.length > 0) {
       Logger.log('Raw TX Headers: ' + JSON.stringify(Object.keys(txRows[0])));
       Logger.log('Raw TX Row 1: ' + JSON.stringify(txRows[0]));
