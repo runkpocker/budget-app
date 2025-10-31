@@ -8,9 +8,3 @@ Files
 - client.html
 - styles.html
 
-Highlights
-- No auto-month on load; user must click **Set Month**.
-- Fetch shows centered modal with hopping 🐰 and the message:
-  "Hang on to your Bunny Hairs, Daddy is getting the info..."
-- Button animates as **Good Girrrrrl ✨** during fetch, then resets.
-- Uses theme variables for easy rebrand later.
