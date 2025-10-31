@@ -1,217 +1,306 @@
 <script>
-// ---------- Helpers ----------
-const qs = (id) => document.getElementById(id);
+(function () {
+  // =========================================================
+  // 1. STATE & CONSTANTS
+  // =========================================================
+  const $ = (id) => document.getElementById(id);
+  
+  const state = {
+    currentMonth: '',
+    txPage: 1,
+    pageSize: 50,
+    loadingCounter: 0 // Centralized loading counter
+  };
 
-// --- NEW: Loading Counter ---
-let loadingCounter = 0;
+  // =========================================================
+  // 2. CORE UTILITIES (Modal, Render)
+  // =========================================================
 
-// ---------- Modal controls (UPDATED) ----------
-function showBusy() {
-  loadingCounter++; // Increment
-  const m = qs('busyModal');
-  if (m) m.classList.remove('hidden');
-}
-function hideBusy() {
-  loadingCounter--; // Decrement
-  if (loadingCounter <= 0) { // Only hide if counter is at or below zero
-    loadingCounter = 0; // Reset
-    const m = qs('busyModal');
-    if (m) m.classList.add('hidden');
-  }
-}
+  function showBusy() {
+    state.loadingCounter++; // Increment
+    const m = $('busyModal');
+    if (m) m.classList.remove('hidden');
+  }
 
-// ---------- Table renderer ----------
-function renderTable(el, rows) {
-  const tbl = typeof el === 'string' ? qs(el) : el;
-  tbl.innerHTML = '';
-  if (!rows || rows.length === 0) {
-    tbl.innerHTML = '<tr><td><em>No data</em></td></tr>';
-    return;
-  }
-  rows.forEach((r, i) => {
-    const tr = document.createElement('tr');
-    r.forEach((c) => {
-      const cell = document.createElement(i === 0 ? 'th' : 'td');
-      cell.textContent = c;
-      tr.appendChild(cell);
-    });
-    tbl.appendChild(tr);
-  });
-}
-
-// ---------- Init ----------
-function init() {
-  const btn = qs('btnApplyMonth');
-
-  // Start clean: no month selected, no data tables populated
-  renderTable('tblActVsBud', []);
-  renderTable('tblIncome', []);
-  renderTable('tblExpense', []);
-}
-
-document.addEventListener('DOMContentLoaded', init);
-</script>
-
-
-<script>
-(function(){
-  const $ = (id) => document.getElementById(id);
-  let txPage = 1;
-  const pageSize = 50;
-
-  // --- START NEW HELPER FUNCTION ---
-  /**
-   * Populates a <select> dropdown with a list of items.
-   * @param {string} elId The ID of the <select> element.
-   * @param {string[]} items An array of strings to use as options.
-   * @param {string} defaultLabel The text for the default (value="") option.
-   */
-  function populateSelect(elId, items, defaultLabel = 'All') {
-    const el = $(elId);
-    if (!el) return;
-    el.innerHTML = ''; // Clear existing options
-
-    // Add the default "All" option
-    const defOpt = document.createElement('option');
-    defOpt.value = '';
-    defOpt.textContent = `— ${defaultLabel} —`;
-    el.appendChild(defOpt);
-
-    // Add items from the server
-    items.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item;
-      opt.textContent = item;
-      el.appendChild(opt);
-    });
-  }
-  // --- END NEW HELPER FUNCTION ---
-
-
-  function normalizeMonthStr(s) {
-    const m = String(s || '').trim();
-    const mm = m.match(/^(\d{4})[-\/.](\d{1,2})$/);
-    return mm ? `${mm[1]}-${mm[2].padStart(2,'0')}` : m;
-  }
-  function currentMonthISO(){ return normalizeMonthStr(window.__summaryMonth || ''); }
-
-  function renderTable(el, rows, cols) {
-    if (!el) return;
-    if (!rows || !rows.length) { el.innerHTML = '<tbody><tr><td class="muted" colspan="'+cols.length+'">No rows</td></tr></tbody>'; return; }
-    const thead = '<thead><tr>' + cols.map(c=>`<th>${c.label}</th>`).join('') + '</tr></thead>';
-    const tbody = '<tbody>' + rows.map(r => '<tr>' + cols.map(c=>`<td>${(r[c.key]??'')}</td>`).join('') + '</tr>').join('') + '</tbody>';
-    el.innerHTML = thead + tbody;
-  }
-
-  function refreshBudgets(){
-    const month = currentMonthISO();
-    const el = $('dxBudgets'); const info = $('dxPageInfo');
-    if (!el) return;
-    if (!month){ if(info) info.textContent=' Set summary month first.'; el.innerHTML=''; return; }
-    
-    showBusy(); // <-- ADDED
-    google.script.run
-      .withSuccessHandler(res => { 
-        renderTable(el, res.rows, [
-          {key:'Month',label:'Month'}, {key:'Type',label:'Type'}, {key:'Category',label:'Category'}, {key:'Budget',label:'Budget'}
-        ]); 
-        hideBusy(); // <-- ADDED
-      })
-      .withFailureHandler(e => { 
-        if(info) info.textContent='Error: '+(e?.message||e); 
-        hideBusy(); // <-- ADDED
-      })
-      .getBudgetView({ month });
-  }
-
-  function refreshTransactions(){
-    const month = currentMonthISO();
-    const el = $('dxTx'); const info = $('dxPageInfo');
-    if (!el) return;
-    if (!month){ if(info) info.textContent=' Set summary month first.'; el.innerHTML=''; return; }
-    const type = ($('dxType')||{}).value || '';
-    const category = ($('dxCat')||{}).value || '';
-    
-    showBusy(); // <-- ADDED
-    google.script.run
-      .withSuccessHandler(res => {
-        if (info) info.textContent = ` Page ${res.page} of ${res.pages} — ${res.total} rows `;
-        renderTable(el, res.rows, [
-          {key:'DateISO',label:'Date'},{key:'Account',label:'Account'},{key:'Type',label:'Type'},
-          {key:'Category',label:'Category'},{key:'Amount',label:'Amount'},{key:'Description',label:'Description'}
-        ]);
-        txPage = res.page;
-        hideBusy(); // <-- ADDED
-      })
-      .withFailureHandler(e => { 
-        if(info) info.textContent='Error: '+(e?.message||e); 
-        hideBusy(); // <-- ADDED
-      })
-      .getTransactionView({ month, type, category, page: txPage, pageSize });
-  }
-
-  window.refreshDataExplorerAll = function(){ try{ txPage=1; refreshBudgets(); refreshTransactions(); }catch(e){ console.warn(e);} };
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const ref = $('dxRefresh'); if (ref) ref.addEventListener('click', window.refreshDataExplorerAll);
-    const t = $('dxType'); if (t) t.addEventListener('change', ()=>{ txPage=1; refreshTransactions(); });
-    const c = $('dxCat'); if (c) c.addEventListener('change', ()=>{ txPage=1; refreshTransactions(); });
-    const p = $('dxPrev'); if (p) p.addEventListener('click', ()=>{ if (txPage>1){ txPage--; refreshTransactions(); }});
-    const n = $('dxNext'); if (n) n.addEventListener('click', ()=>{ txPage++; refreshTransactions(); });
-    if (window.__summaryMonth) window.refreshDataExplorerAll();
-
-    // --- START UPDATED CODE TO POPULATE DROPDOWNS ---
-    showBusy(); // <-- ADDED
-    // Fetch the Type list and populate the dropdown
-    google.script.run
-      .withSuccessHandler(items => {
-        populateSelect('dxType', items, 'All Types');
-        hideBusy(); // <-- ADDED
-      })
-      .withFailureHandler(err => {
-        console.error('Failed to load types: ' + (err.message || err));
-        hideBusy(); // <-- ADDED
-      })
-      .listTypes();
-    
-    showBusy(); // <-- ADDED
-    // Fetch the Category list and populate the dropdown
-    google.script.run
-      .withSuccessHandler(items => {
-        populateSelect('dxCat', items, 'All Categories');
-        hideBusy(); // <-- ADDED
-      })
-      .withFailureHandler(err => {
-        console.error('Failed to load categories: ' + (err.message || err));
-        hideBusy(); // <-- ADDED
-      })
-      .listCategories();
-    // --- END UPDATED CODE TO POPULATE DROPDOWNS ---
-  });
-})();
-</script>
-<script>
-/* FINAL EVENT LISTENER */
-document.addEventListener('summary-month-set', function(e) {
-  const iso = e.detail && e.detail.month ? e.detail.month : '';
-  const includeTx = e.detail && e.detail.includeTx;
-
-  if (iso) {
-    // 1. Update the global month variable
-    window.__summaryMonth = iso;
-
-    // 2. Update the visual badge
-    const badge = document.getElementById('dxMonthBadge');
-    if (badge) badge.textContent = 'Month: ' + iso;
-
-    // 3. Refresh data IF the "Include Transactions" checkbox was checked
-    if (includeTx && typeof window.refreshDataExplorerAll === 'function') {
-      window.refreshDataExplorerAll();
+  function hideBusy() {
+    state.loadingCounter--; // Decrement
+    if (state.loadingCounter <= 0) { // Only hide if counter is at or below zero
+      state.loadingCounter = 0; // Reset
+      const m = $('busyModal');
+      if (m) m.classList.add('hidden');
     }
   }
 
-  // --- ADD THIS LINE ---
-  // This call balances the showBusy() from the "Set Month" button click.
-  hideBusy();
-});
+  /** Renders the simple 2D array tables (Summary) */
+  function renderArrayTable(el, rows) {
+    const tbl = typeof el === 'string' ? $(el) : el;
+    tbl.innerHTML = '';
+    if (!rows || rows.length === 0) {
+      tbl.innerHTML = '<tr><td><em>No data</em></td></tr>';
+      return;
+    }
+    rows.forEach((r, i) => {
+      const tr = document.createElement('tr');
+      r.forEach((c) => {
+        const cell = document.createElement(i === 0 ? 'th' : 'td');
+        cell.textContent = c;
+        tr.appendChild(cell);
+      });
+      tbl.appendChild(tr);
+    });
+  }
+
+  /** Renders the object-array tables (Data Explorer) */
+  function renderObjectTable(el, rows, cols) {
+    const tableEl = typeof el === 'string' ? $(el) : el;
+    if (!tableEl) return;
+    
+    if (!rows || !rows.length) { 
+      tableEl.innerHTML = '<tbody><tr><td class="muted" colspan="'+cols.length+'">No rows</td></tr></tbody>'; 
+      return; 
+    }
+    const thead = '<thead><tr>' + cols.map(c=>`<th>${c.label}</th>`).join('') + '</tr></thead>';
+    const tbody = '<tbody>' + rows.map(r => '<tr>' + cols.map(c=>`<td>${(r[c.key]??'')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+    tableEl.innerHTML = thead + tbody;
+  }
+
+  /** Populates a <select> dropdown */
+  function populateSelect(elId, items, defaultLabel = 'All') {
+    const el = $(elId);
+    if (!el) return;
+    el.innerHTML = ''; 
+
+    const defOpt = document.createElement('option');
+    defOpt.value = '';
+    defOpt.textContent = `— ${defaultLabel} —`;
+    el.appendChild(defOpt);
+
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      el.appendChild(opt);
+    });
+  }
+  
+  function normalizeMonthStr(s) {
+    const m = String(s || '').trim();
+    const mm = m.match(/^(\d{4})[-\/.](\d{1,2})$/);
+    return mm ? `${mm[1]}-${mm[2].padStart(2,'0')}` : m;
+  }
+
+  // =========================================================
+  // 3. SERVER CALLS / DATA EXPLORER LOGIC
+  // =========================================================
+
+  function refreshBudgets(){
+    if (!state.currentMonth) { $('dxPageInfo').textContent=' Set summary month first.'; $('dxBudgets').innerHTML=''; return; }
+    
+    showBusy();
+    google.script.run
+      .withSuccessHandler(res => { 
+        renderObjectTable('dxBudgets', res.rows, [
+          {key:'Month',label:'Month'}, {key:'Type',label:'Type'}, {key:'Category',label:'Category'}, {key:'Budget',label:'Budget'}
+        ]); 
+        hideBusy();
+      })
+      .withFailureHandler(e => { 
+        $('dxPageInfo').textContent='Error loading budgets: '+(e?.message||e); 
+        hideBusy();
+      })
+      .getBudgetView({ month: state.currentMonth });
+  }
+
+  function refreshTransactions(){
+    if (!state.currentMonth) { $('dxPageInfo').textContent=' Set summary month first.'; $('dxTx').innerHTML=''; return; }
+    
+    const type = ($('dxType')||{}).value || '';
+    const category = ($('dxCat')||{}).value || '';
+    
+    showBusy();
+    google.script.run
+      .withSuccessHandler(res => {
+        $('dxPageInfo').textContent = ` Page ${res.page} of ${res.pages} — ${res.total} rows `;
+        renderObjectTable('dxTx', res.rows, [
+          {key:'DateISO',label:'Date'},{key:'Account',label:'Account'},{key:'Type',label:'Type'},
+          {key:'Category',label:'Category'},{key:'Amount',label:'Amount'},{key:'Description',label:'Description'}
+        ]);
+        state.txPage = res.page;
+        hideBusy();
+      })
+      .withFailureHandler(e => { 
+        $('dxPageInfo').textContent='Error loading transactions: '+(e?.message||e); 
+        hideBusy();
+      })
+      .getTransactionView({ 
+        month: state.currentMonth, 
+        type: type, 
+        category: category, 
+        page: state.txPage, 
+        pageSize: state.pageSize 
+      });
+  }
+
+  function refreshDataExplorerAll(){ 
+    state.txPage = 1; 
+    refreshBudgets(); 
+    refreshTransactions(); 
+  }
+
+  // =========================================================
+  // 4. SUMMARY CARD LOGIC (Moved from index.html)
+  // =========================================================
+
+  function readMonthISO() {
+    const iMonth = $('isoMonth');
+    if (!iMonth) return '';
+    if (iMonth.type === 'month') return iMonth.value || '';
+    const mm = String(iMonth.value || '').padStart(2, '0');
+    const yyyy = new Date().getFullYear();
+    return mm ? `${yyyy}-${mm}` : '';
+  }
+
+  function handleSetMonthSuccess(iso, res) {
+    const btn = $('btnApplyMonth');
+    btn.textContent = 'Set Month';
+    btn.classList.remove('busy');
+
+    $('monthStatus').textContent = `✓ Set to ${res.b4}`;
+
+    // Render the summary tables
+    if (typeof renderArrayTable === 'function') {
+      renderArrayTable('tblActVsBud', res.actVsBud);
+      renderArrayTable('tblIncome', res.income);
+      renderArrayTable('tblExpense', res.expense);
+    }
+    
+    // Bridge to Data Explorer (Internal Logic - No CustomEvent needed!)
+    const norm = normalizeMonthStr(iso);
+    const includeTx = !!($('includeTx') && $('includeTx').checked);
+
+    state.currentMonth = norm;
+    $('dxMonthBadge').textContent = 'Month: ' + norm;
+
+    if (includeTx) {
+      refreshDataExplorerAll();
+    }
+    
+    // This hideBusy() balances the showBusy() call from handleSetMonthClick
+    hideBusy();
+  }
+  
+  function handleSetMonthFailure(err) {
+    const btn = $('btnApplyMonth');
+    const status = $('monthStatus');
+    btn.textContent = 'Set Month';
+    btn.classList.remove('busy');
+    
+    hideBusy(); 
+    
+    const msg = (err && err.message) ? err.message : 'Unknown error';
+    if (status) status.textContent = 'Error: ' + msg;
+    alert('Set Month failed: ' + msg);
+  }
+
+  function handleSetMonthClick() {
+    const iso = readMonthISO();
+    if (!iso) { alert('Please select a month first.'); return; }
+    
+    const btn = $('btnApplyMonth');
+    btn.textContent = 'Good Girrrrrl ✨';
+    btn.classList.add('busy');
+    
+    showBusy(); 
+    $('monthStatus').textContent = '';
+
+    google.script.run
+      .withSuccessHandler(res => handleSetMonthSuccess(iso, res))
+      .withFailureHandler(handleSetMonthFailure)
+      .setSummaryMonthFromIso(iso);
+  }
+
+
+  // =========================================================
+  // 5. INITIALIZATION
+  // =========================================================
+
+  function initializeDropdowns() {
+    // Start with empty tables
+    renderArrayTable('tblActVsBud', []);
+    renderArrayTable('tblIncome', []);
+    renderArrayTable('tblExpense', []);
+    renderObjectTable('dxBudgets', [], [{label: 'Loading...', key: 'Month'}]); // Placeholder
+    renderObjectTable('dxTx', [], [{label: 'Loading...', key: 'DateISO'}]);    // Placeholder
+
+    // Fetch the Type list and populate the dropdown
+    showBusy(); 
+    google.script.run
+      .withSuccessHandler(items => {
+        populateSelect('dxType', items, 'All Types');
+        hideBusy();
+      })
+      .withFailureHandler(err => {
+        console.error('Failed to load types: ' + (err.message || err));
+        hideBusy();
+      })
+      .listTypes();
+    
+    // Fetch the Category list and populate the dropdown
+    showBusy();
+    google.script.run
+      .withSuccessHandler(items => {
+        populateSelect('dxCat', items, 'All Categories');
+        hideBusy();
+      })
+      .withFailureHandler(err => {
+        console.error('Failed to load categories: ' + (err.message || err));
+        hideBusy();
+      })
+      .listCategories();
+  }
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize content and fetch initial dropdown data
+    initializeDropdowns();
+    
+    // Event listeners for the Summary Card (from index.html)
+    const btnApplyMonth = $('btnApplyMonth');
+    if (btnApplyMonth) {
+      btnApplyMonth.addEventListener('click', handleSetMonthClick);
+    }
+
+    // Event listeners for the Data Explorer (pagination/filtering)
+    $('dxRefresh').addEventListener('click', refreshDataExplorerAll);
+    
+    // When Type/Category filters change, reset page and refresh transactions
+    $('dxType').addEventListener('change', () => { state.txPage = 1; refreshTransactions(); });
+    $('dxCat').addEventListener('change', () => { state.txPage = 1; refreshTransactions(); });
+    
+    // Pagination buttons
+    $('dxPrev').addEventListener('click', () => { 
+      if (state.txPage > 1) { 
+        state.txPage--; 
+        refreshTransactions(); 
+      }
+    });
+    $('dxNext').addEventListener('click', () => { 
+      state.txPage++; // Assume next page exists, let the handler correct if necessary
+      refreshTransactions(); 
+    });
+    
+    // Initial load: Try to load data if month is already set (e.g., if we were debugging)
+    // NOTE: If the app loaded without a month in B4, this does nothing.
+    google.script.run
+        .withSuccessHandler(res => {
+            if (res.iso) {
+                state.currentMonth = res.iso;
+                $('dxMonthBadge').textContent = 'Month: ' + res.iso;
+                refreshDataExplorerAll();
+            }
+        })
+        .getCurrentMonthIso();
+
+  });
+})();
 </script>

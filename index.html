@@ -12,7 +12,7 @@
     </div>
   </div>
 
-  <section class="cards">
+    <section class="cards">
     <div class="card">
       <h2>Summary</h2>
       <div class="row">
@@ -22,16 +22,14 @@
         <span id="monthStatus" class="status"></span>
       </div>
 
-            <div id="summaryArea" class="summary-flex" style="margin-top:10px">
-        <div><h3>Actual vs Budget</h3><table id="tblActVsBud"></table></div>
-        <div><h3>Income</h3><table id="tblIncome"></table></div>
-        <div><h3>Expense</h3><table id="tblExpense"></table></div>
+            <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
+        <div class="summary-col"><h3>Actual vs Budget</h3><table id="tblActVsBud"></table></div>
+        <div class="summary-col"><h3>Income</h3><table id="tblIncome"></table></div>
+        <div class="summary-col"><h3>Expense</h3><table id="tblExpense"></table></div>
       </div>
     </div>
-  </section>
-
-  
-    <div class="card">
+  
+        <div class="card">
       <h2>Bunny Data Explorer</h2>
       <div class="row"><span id="dxMonthBadge" class="chip">Month: not set</span></div>
 
@@ -56,9 +54,8 @@
       </div>
       <table id="dxTx"></table>
     </div>
-
-
-  <?!= include('client'); ?>
+  </section>
+    <?!= include('client'); ?>
 </div>
 
 <script>
@@ -123,7 +120,6 @@ document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: n
         const msg = (err && err.message) ? err.message : 'Unknown error';
         if (status) status.textContent = 'Error: ' + msg;
         alert('Set Month failed: ' + msg);
-        // <-- Stray 'T' was removed from here
       })
       .setSummaryMonthFromIso(iso);
   });
