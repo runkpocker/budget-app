@@ -1,112 +1,111 @@
 <?!= include('styles'); ?>
 <div class="container">
-  <header class="app-header">
-    <h1>🐰 Bunny Balut Budget</h1>
-    <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
-  </header>
+  <header class="app-header">
+    <h1>🐰 Bunny Balut Budget</h1>
+    <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
+  </header>
 
-  <!-- Busy / progress modal -->
-  <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
-    <div class="modal-panel">
-      <div class="bunny" aria-hidden="true">🐰</div>
-      <div class="modal-text">Hang on to your Bunny Hairs, Daddy is getting the info...</div>
-    </div>
-  </div>
+    <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
+    <div class="modal-panel">
+      <div class="bunny" aria-hidden="true">🐰</div>
+      <div class="modal-text">Hang on to your Bunny Hairs, Daddy is getting the info...</div>
+    </div>
+  </div>
 
-  <section class="cards">
-    <div class="card">
-      <h2>Summary</h2>
-      <div class="row">
-        <label for="isoMonth">Month</label>
-        <input type="month" id="isoMonth" />
-        <button id="btnApplyMonth">Set Month</button> <label class="inline" style="margin-left:8px;"><input type="checkbox" id="includeTx" checked> Include Transactions</label>
-        <span id="monthStatus" class="status"></span>
-      </div>
+  <section class="cards">
+    <div class="card">
+      <h2>Summary</h2>
+      <div class="row">
+        <label for="isoMonth">Month</label>
+        <input type="month" id="isoMonth" />
+        <button id="btnApplyMonth">Set Month</button> <label class="inline" style="margin-left:8px;"><input type="checkbox" id="includeTx" checked> Include Transactions</label>
+        <span id="monthStatus" class="status"></span>
+      </div>
 
-      <div id="summaryArea" class="grid" style="margin-top:10px">
-        <div><h3>Actual vs Budget</h3><table id="tblActVsBud"></table></div>
-        <div><h3>Income</h3><table id="tblIncome"></table></div>
-        <div><h3>Expense</h3><table id="tblExpense"></table></div>
-      </div>
-    </div>
-  </section>
+            <div id="summaryArea" class="summary-flex" style="margin-top:10px">
+        <div><h3>Actual vs Budget</h3><table id="tblActVsBud"></table></div>
+        <div><h3>Income</h3><table id="tblIncome"></table></div>
+        <div><h3>Expense</h3><table id="tblExpense"></table></div>
+      </div>
+    </div>
+  </section>
 
-  
-    <div class="card">
-      <h2>Bunny Data Explorer</h2>
-      <div class="row"><span id="dxMonthBadge" class="chip">Month: not set</span></div>
+  
+    <div class="card">
+      <h2>Bunny Data Explorer</h2>
+      <div class="row"><span id="dxMonthBadge" class="chip">Month: not set</span></div>
 
-      <div class="row">
-        <label for="dxType">Type</label>
-        <select id="dxType"></select>
-        <label for="dxCat">Category</label>
-        <select id="dxCat"></select>
-        <button id="dxRefresh">Get Transactions</button>
-      </div>
+      <div class="row">
+        <label for="dxType">Type</label>
+        <select id="dxType"></select>
+        <label for="dxCat">Category</label>
+        <select id="dxCat"></select>
+        <button id="dxRefresh">Get Transactions</button>
+      </div>
 
-      <div class="row" style="margin-top:10px">
-        <strong>Budget</strong>
-      </div>
-      <table id="dxBudgets"></table>
+      <div class="row" style="margin-top:10px">
+        <strong>Budget</strong>
+      </div>
+      <table id="dxBudgets"></table>
 
-      <div class="row" style="margin-top:16px">
-        <strong>Transactions</strong>
-        <span id="dxPageInfo" class="status"></span>
-        <span style="margin-left:auto"></span>
-        <button id="dxPrev">Prev</button>
-        <button id="dxNext">Next</button>
-      </div>
-      <table id="dxTx"></table>
-    </div>
+      <div class="row" style="margin-top:16px">         <strong>Transactions</strong>
+        <span id="dxPageInfo" class="status"></span>
+        <span style="margin-left:auto"></span>
+        <button id="dxPrev">Prev</button>
+        <button id="dxNext">Next</button>
+      </div>
+      <table id="dxTx"></table>
+    </div>
 
 
-  <?!= include('client'); ?>
+  <?!= include('client'); ?>
 </div>
 
-<!-- SUMMARY->EXPLORER BRIDGE -->
 <script>
 (function () {
-  const $ = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
-  const btn  = $('btnApplyMonth') || $('applyButton');
-  const iMonth = $('isoMonth') || $('monthSelect');
-  const status = $('monthStatus');
-  if (!btn) return;
+  const btn  = $('btnApplyMonth') || $('applyButton');
+  const iMonth = $('isoMonth') || $('monthSelect');
+  const status = $('monthStatus');
+  if (!btn) return;
 
-  function readMonthISO() {
-    if (!iMonth) return '';
-    if (iMonth.type === 'month') return iMonth.value || '';
-    const mm = String(iMonth.value || '').padStart(2, '0');
-    const yyyy = new Date().getFullYear();
-    return mm ? `${yyyy}-${mm}` : '';
-  }
+  function readMonthISO() {
+    if (!iMonth) return '';
+    if (iMonth.type === 'month') return iMonth.value || '';
+    const mm = String(iMonth.value || '').padStart(2, '0');
+    const yyyy = new Date().getFullYear();
+    return mm ? `${yyyy}-${mm}` : '';
+  }
 
-  btn.addEventListener('click', () => {
-    const iso = readMonthISO();
-    if (!iso) { alert('Please select a month first.'); return; }
+  btn.addEventListener('click', () => {
+    const iso = readMonthISO();
+    if (!iso) { alert('Please select a month first.'); return; }
 
-    const prev = btn.textContent;
-    btn.textContent = 'Good Girrrrrl ✨';
-    btn.classList.add('busy');
-    const modal = $('busyModal');
-    if (modal) modal.classList.remove('hidden');
-    if (status) status.textContent = '';
+    const prev = btn.textContent;
+    btn.textContent = 'Good Girrrrrl ✨';
+    btn.classList.add('busy');
 
-    google.script.run
+    // --- This is the correct modal logic ---
+    showBusy(); 
+    if (status) status.textContent = '';
+    // --- End modal logic ---
+
+    google.script.run
 .withSuccessHandler((res) => {
-  btn.textContent = prev;
-  btn.classList.remove('busy');
-  if (modal) modal.classList.add('hidden');
+  btn.textContent = prev;
+  btn.classList.remove('busy');
 
-  // --- START NEW/MERGED CODE ---
-  if (status) status.textContent = `✓ Set to ${res.b4}`;
+  // We correctly removed the 'hide modal' call from here
 
-  // Render the summary tables (from the function we deleted)
-  if (typeof renderTable === 'function') {
-    renderTable('tblActVsBud', res.actVsBud);
-    renderTable('tblIncome', res.income);
-    renderTable('tblExpense', res.expense);
-  }
+  if (status) status.textContent = `✓ Set to ${res.b4}`;
+
+  // Render the summary tables
+  if (typeof renderTable === 'function') {
+    renderTable('tblActVsBud', res.actVsBud);
+    renderTable('tblIncome', res.income);
+    renderTable('tblExpense', res.expense);
+  }
 
 // Bridge to Data Explorer
 const norm = iso.replace(/^(\d{4})[-\/.](\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2,'0')}`);
@@ -115,16 +114,18 @@ const includeTx = !!(document.getElementById('includeTx') && document.getElement
 // Fire ONE event that other scripts can listen for
 document.dispatchEvent(new CustomEvent('summary-month-set', { detail: { month: norm, includeTx: includeTx } }));
 })
-      .withFailureHandler((err) => {
-        btn.textContent = prev;
-        btn.classList.remove('busy');
-        if (modal) modal.classList.add('hidden');
-        const msg = (err && err.message) ? err.message : 'Unknown error';
-        if (status) status.textContent = 'Error: ' + msg;
-        alert('Set Month failed: ' + msg);
-      })
-      .setSummaryMonthFromIso(iso);
-  });
+      .withFailureHandler((err) => {
+        btn.textContent = prev;
+        btn.classList.remove('busy');
+        
+        hideBusy(); // Correctly call this on failure
+        
+        const msg = (err && err.message) ? err.message : 'Unknown error';
+        if (status) status.textContent = 'Error: ' + msg;
+        alert('Set Month failed: ' + msg);
+        // <-- Stray 'T' was removed from here
+      })
+      .setSummaryMonthFromIso(iso);
+  });
 })();
 </script>
-

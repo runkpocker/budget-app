@@ -35,6 +35,7 @@ function _safeNamed(name) {
 }
 
 // --- Month picker endpoint that RESPECTS Summary!B4 data validation ---
+// --- This is the ORIGINAL, V1 working code ---
 function setSummaryMonthFromIso(isoYYYYMM) {
   if (!/^\d{4}-\d{2}$/.test(String(isoYYYYMM || ''))) {
     throw new Error('Expected YYYY-MM (e.g., 2025-10)');
@@ -126,6 +127,7 @@ function _returnSummary_(b4Range) {
 }
 
 // Kept for future use (UI no longer auto-reads it on load)
+// --- This is the ORIGINAL, V1 working code ---
 function getCurrentMonthIso() {
   const sh = _ss().getSheetByName('Summary');
   if (!sh) return { iso: '' };
@@ -170,6 +172,7 @@ function readSheetObjects_(sheetName) {
   });
 }
 
+// --- This is the ORIGINAL, V1 working code ---
 function asYYYYMM_(v) {
   if (!v) return '';
   if (v instanceof Date && !isNaN(v)) {
@@ -185,7 +188,7 @@ function asYYYYMM_(v) {
   return '';
 }
 
-// --- START REPLACEMENT ---
+// --- START: This is the ONLY change from V1 (our successful fix) ---
 function listCategories() {
   try {
     const ss = _ss();
@@ -208,12 +211,11 @@ function listCategories() {
 
 function listTypes() {
   // Your setup script hardcodes these validation lists.
-  // So, the web app should return the same hardcoded list.
-  // This is the "source of truth" for what is allowed.
   return ['Expense', 'Income', 'Transfer'];
 }
-// --- END REPLACEMENT ---
+// --- END: Successful fix ---
 
+// --- This is the ORIGINAL, V1 working code ---
 function getBudgetView(args) {
   args = args || {};
   const month = asYYYYMM_(args && args.month ? args.month : '');
@@ -237,6 +239,7 @@ function getBudgetView(args) {
   return { rows: filtered };
 }
 
+// --- This is the ORIGINAL, V1 working code ---
 function getTransactionView(args) {
   args = args || {};
   const month = asYYYYMM_(args && args.month ? args.month : '');
@@ -250,7 +253,7 @@ function getTransactionView(args) {
   const missing = TX_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Transactions sheet missing headers: ' + missing.join(', '));
   const normalized = rows.map(r => {
-    // --- START REPLACEMENT ---
+    // --- THIS IS THE ORIGINAL, TIMEZONE-SAFE LOGIC ---
     let yyyy = '1970', mm = '01', dd = '01', yyyymm = '1970-01';
     let d = r.Date;
 
@@ -280,7 +283,7 @@ function getTransactionView(args) {
     const amtStr = String(r.Amount ||
  '').replace(/,/g, '');
     const amt = Number(amtStr);
-    // --- END REPLACEMENT ---
+    // --- END ORIGINAL LOGIC ---
 
     return {
       DateISO: `${yyyy}-${mm}-${dd}`,
@@ -305,6 +308,7 @@ function getTransactionView(args) {
   return { rows: slice, page, pageSize, total, pages: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
+// --- This is the ORIGINAL, V1 working code ---
 function normalizeBudgetMonthCell_(v) {
   const tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
   if (v instanceof Date) return Utilities.formatDate(v, tz, 'yyyy-MM');
