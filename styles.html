@@ -20,7 +20,8 @@
 
 * { box-sizing: border-box; }
 
-/* --- SYNTAX FIX: This must be correct to load the rest of the CSS --- */
+/* --- THIS IS THE CRITICAL SYNTAX FIX --- */
+/* The nested 'body {}' rule has been removed */
 body {
   margin: 0;
   font-family: "Book Antiqua", Palatino, "Palatino Linotype", serif;
@@ -29,6 +30,7 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+/* --- END CORRECTION --- */
 
 
 /* ---------- Layout ---------- */
@@ -58,17 +60,17 @@ body {
 }
 .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
 
-/* --- SUMMARY ALIGNMENT FIX: Robust Flexbox ensures alignment --- */
+/* --- SUMMARY ALIGNMENT FIX: This rule will now load --- */
 .summary-flex-final { 
   display: flex; 
   gap: 12px; 
   width: 100%;
 }
 .summary-flex-final > .summary-col {
-  flex: 1 1 0; /* Ensures all three columns take up equal space and align perfectly */
+  flex: 1 1 0; /* Ensures all three columns take up equal space */
 }
 
-/* Original .grid class used for other sections (like the main two cards) */
+/* Original .grid class (still used by summaryArea) */
 .grid { 
   display: grid; 
   gap: 12px; 
@@ -85,6 +87,29 @@ body {
   color: var(--text);
 }
 
+/* --- TWEAK 3: New style for filter layout --- */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  gap: 8px 12px; /* Row gap, column gap */
+  align-items: center;
+  margin-top: 8px; /* Added margin */
+}
+.filter-row label {
+  font-weight: 500;
+  color: var(--muted);
+}
+.filter-row select {
+  width: 200px; /* Makes dropdowns smaller */
+  flex-grow: 1; /* Allow them to grow if space is available */
+}
+.filter-row button {
+  flex-grow: 1; /* Allow button to grow */
+  margin-left: auto; /* Pushes button to the right if space is ample */
+}
+/* --- END TWEAK --- */
+
+
 /* ---------- Buttons ---------- */
 button {
   padding: 8px 12px;
@@ -100,7 +125,6 @@ button:hover {
   background: #DBD3C2;
 }
 
-/* “Good Girrrrrl ✨” animation (same behavior, slightly darker glow) */
 button.busy {
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -134,15 +158,20 @@ table {
 th, td { padding: 8px 10px; border-bottom: 1px solid var(--panel-border); }
 th { background: #E4DECF; text-align: left; } /* same tone as card header */
 
+/* --- THIS IS THE UPDATED LAYOUT FIX --- */
 /* Responsive design for summary on small screens */
 @media (max-width: 900px) { 
   .cards { 
     grid-template-columns: 1fr; /* Stack main cards */
   }
-  .summary-flex-final {
-    flex-direction: column; /* Stack summary columns */
+  /* The .summary-flex-final rule was removed from here 
+    to prevent stacking.
+  */
+  .grid {
+    grid-template-columns: 1fr;
   }
 }
+/* --- END UPDATE --- */
 
 /* ---------- Modal ---------- */
 .hidden { display: none !important; }
@@ -155,21 +184,30 @@ th { background: #E4DECF; text-align: left; } /* same tone as card header */
   z-index: 9999;
   backdrop-filter: saturate(1.1);
 }
+
+/* --- TWEAK 1: Popup Size & Layout --- */
 .modal-panel {
   background: #EDE7DC; /* darker pastel popup */
   color: var(--text);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
-  min-width: min(520px, 92vw);
-  padding: 20px 24px;
+  
+  max-width: 92vw; /* Add a max width */
+  
+  /* Shrink padding for height */
+  padding: 12px 20px; 
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   display: flex;
-  flex-direction: column;
+  
+  /* Change to horizontal layout */
+  flex-direction: row; 
   align-items: center;
   justify-content: center;
-  text-align: center;
-  gap: 12px;
+  text-align: left; /* Align text to the left */
+  gap: 16px; /* Space between bunny and text */
 }
+/* --- END TWEAK --- */
+
 .bunny {
   font-size: 34px;
   line-height: 1;
