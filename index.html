@@ -14,11 +14,12 @@
 
   <section class="cards">
     <div class="card">
-      <h2>Summary</h2>
+      <h2>🧮 Summary</h2>
       <div class="row">
         <label for="isoMonth">Month</label>
         <input type="month" id="isoMonth" />
-        <button id="btnApplyMonth">Set Month</button> <label class="inline" style="margin-left:8px;"><input type="checkbox" id="includeTx" checked> Include Transactions</label>
+        <button id="btnApplyMonth" class="action">Set Month</button>
+        <label class="inline" style="margin-left:8px;"><input type="checkbox" id="includeTx" checked> Include Transactions</label>
         <span id="monthStatus" class="status"></span>
       </div>
 
@@ -31,31 +32,31 @@
   </section>
 
   
-    <div class="card">
-      <h2>Bunny Data Explorer</h2>
-            <div class="row"><span id="dxMonthBadge" class="chip">Month Set: not set</span></div>
+<div class="card">
+  <h2>🔎 Bunny Data Explorer</h2>
 
-      <h3>Data Filters</h3>
-      <div class="filter-row">
-        <label for="dxType">Type</label>
-        <select id="dxType"></select>
-        <label for="dxCat">Category</label>
-        <select id="dxCat"></select>
-        <button id="dxRefresh">Get Transactions</button>
-      </div>
-            <div class="row" style="margin-top:10px">
-        <strong>Budget</strong>
-      </div>
-      <table id="dxBudgets"></table>
+  <div class="row"><span id="dxMonthBadge" class="chip">Month Set: not set</span></div>
 
-      <div class="row" style="margin-top:16px">         <strong>Transactions</strong>
-        <span id="dxPageInfo" class="status"></span>
-        <span style="margin-left:auto"></span>
-        <button id="dxPrev">Prev</button>
-        <button id="dxNext">Next</button>
-      </div>
-      <table id="dxTx"></table>
-    </div>
+  <h3>Data Filters</h3>
+  <!-- Compact filters -->
+  <div class="filter-row compact">
+    <label for="dxType">Type</label>
+    <select id="dxType"></select>
+
+    <label for="dxCat">Category</label>
+    <select id="dxCat"></select>
+
+    <span class="flex-spacer"></span>
+    <button id="dxRefresh" class="action">Refresh Transactions</button>
+  </div>
+
+  <h3 class="table-title">Budget</h3>
+  <table id="dxBudgets"></table>
+
+  <h3 class="table-title" style="margin-top:16px">Transactions</h3>
+  <table id="dxTx"></table>
+</div>
+
 
 
   <?!= include('client'); ?>

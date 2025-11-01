@@ -20,6 +20,23 @@ function hideBusy() {
   }
 }
 
+// --- Busy message helpers ---
+const busyState = { budgets: false, tx: false };
+
+function setBusyMessage(text) {
+  const el = document.getElementById('busyModal');
+  const t = el ? el.querySelector('.modal-text') : null;
+  if (t) t.textContent = text;
+}
+
+function updateBusyMessage() {
+  const b = busyState.budgets, t = busyState.tx;
+  if (b && t)      setBusyMessage('Fetching budgets & transactions (2 tasks)…');
+  else if (b)      setBusyMessage('Fetching budgets (1/2)…');
+  else if (t)      setBusyMessage('Fetching transactions (1/2)…');
+  else             setBusyMessage('Hang on to your Bunny Hairs, Daddy is getting the info...'); // default
+}
+
 // ---------- Table renderer ----------
 function renderTable(el, rows) {
   const tbl = typeof el === 'string' ? qs(el) : el;
@@ -116,60 +133,95 @@ document.addEventListener('DOMContentLoaded', init);
 
   function refreshBudgets(){
     const month = currentMonthISO();
-    const el = $('dxBudgets'); const info = $('dxPageInfo');
+    const el = $('dxBudgets'); 
     if (!el) return;
     if (!month){ if(info) info.textContent=' Set summary month first.'; el.innerHTML=''; return; }
+
+    // NEW: mark budgets as running and update modal message
+    busyState.budgets = true;
+    updateBusyMessage();
     
-    showBusy(); 
-    google.script.run
-      .withSuccessHandler(res => { 
-        renderTable(el, res.rows, [
-          {key:'Month',label:'Month'}, {key:'Type',label:'Type'}, {key:'Category',label:'Category'}, {key:'Budget',label:'Budget'}
-        ]); 
-        hideBusy(); 
-      })
-      .withFailureHandler(e => { 
-        if(info) info.textContent='Error: '+(e?.message||e); 
-        hideBusy(); 
-      })
-      .getBudgetView({ month });
+  showBusy();
+  google.script.run
+    .withSuccessHandler(res => {
+      renderTable(el, res.rows, [
+        {key:'Month',label:'Month'}, {key:'Type',label:'Type'}, {key:'Category',label:'Category'}, {key:'Budget',label:'Budget'}
+      ]);
+      // NEW: clear budgets flag and update message
+      busyState.budgets = false;
+      updateBusyMessage();
+      hideBusy();
+    })
+    .withFailureHandler(e => {
+      if(info) info.textContent='Error: '+(e?.message||e);
+      // NEW: clear budgets flag and update message
+      busyState.budgets = false;
+      updateBusyMessage();
+      hideBusy();
+    })
+    .getBudgetView({ month });
   }
 
   function refreshTransactions(){
     const month = currentMonthISO();
-    const el = $('dxTx'); const info = $('dxPageInfo');
+    const el = $('dxTx'); 
     if (!el) return;
     if (!month){ if(info) info.textContent=' Set summary month first.'; el.innerHTML=''; return; }
     const type = ($('dxType')||{}).value || '';
     const category = ($('dxCat')||{}).value || '';
     
+    busyState.tx = true;
+    updateBusyMessage();
+
     showBusy(); 
     google.script.run
-      .withSuccessHandler(res => {
-        if (info) info.textContent = ` Page ${res.page} of ${res.pages} — ${res.total} rows `;
-        renderTable(el, res.rows, [
-          {key:'DateISO',label:'Date'},{key:'Account',label:'Account'},{key:'Type',label:'Type'},
-          {key:'Category',label:'Category'},{key:'Amount',label:'Amount'},{key:'Description',label:'Description'}
-        ]);
-        txPage = res.page;
-        hideBusy(); 
-      })
+.withSuccessHandler(res => {
+  renderTable(el, res.rows, [
+    {key:'DateISO',label:'Date'},{key:'Account',label:'Account'},{key:'Type',label:'Type'},
+    {key:'Category',label:'Category'},{key:'Amount',label:'Amount'},{key:'Description',label:'Description'}
+  ]);
+      busyState.tx = false;
+      updateBusyMessage();
+      hideBusy();
+  //txPage = 1; // keep stable
+  
+})
       .withFailureHandler(e => { 
         if(info) info.textContent='Error: '+(e?.message||e); 
         hideBusy(); 
       })
-      .getTransactionView({ month, type, category, page: txPage, pageSize });
+      .getTransactionView({ month, type, category, page: 1, pageSize: 1000 });
   }
 
   window.refreshDataExplorerAll = function(){ try{ txPage=1; refreshBudgets(); refreshTransactions(); }catch(e){ console.warn(e);} };
 
   document.addEventListener('DOMContentLoaded', () => {
-    const ref = $('dxRefresh'); if (ref) ref.addEventListener('click', window.refreshDataExplorerAll);
+const ref = document.getElementById('dxRefresh');
+if (ref) ref.addEventListener('click', () => {
+  const prev = ref.textContent;
+  ref.textContent = 'Good Girrrrrl ✨';
+  ref.classList.add('busy');
+
+  try {
+    // This calls refreshBudgets() + refreshTransactions()
+    // Both already do showBusy()/hideBusy() around their server calls.
+    if (typeof window.refreshDataExplorerAll === 'function') {
+      window.refreshDataExplorerAll();
+    }
+  } finally {
+    // Button vibe lasts briefly; the popup is handled by inner calls.
+    setTimeout(() => {
+      ref.textContent = prev;
+      ref.classList.remove('busy');
+    }, 1200);
+  }
+});
+
+
+
     const t = $('dxType'); if (t) t.addEventListener('change', ()=>{ txPage=1; refreshTransactions(); });
     const c = $('dxCat'); if (c) c.addEventListener('change', ()=>{ txPage=1; refreshTransactions(); });
-    const p = $('dxPrev'); if (p) p.addEventListener('click', ()=>{ if (txPage>1){ txPage--; refreshTransactions(); }});
-    const n = $('dxNext'); if (n) n.addEventListener('click', ()=>{ txPage++; refreshTransactions(); });
-
+ 
     // ⛔ No auto-month fetch here.
     // Badge stays "Month Set: not set" until Set Month is clicked.
 

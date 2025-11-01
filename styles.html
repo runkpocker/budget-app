@@ -107,6 +107,35 @@ body {
   flex-grow: 1; /* Allow button to grow */
   margin-left: auto; /* Pushes button to the right if space is ample */
 }
+
+/* Compact filter row */
+.filter-row.compact {
+  gap: 8px;
+  margin-top: 4px;
+  align-items: center;
+}
+.filter-row.compact label { font-weight: 600; }
+.filter-row.compact select {
+  width: 180px;       /* tighter */
+  max-width: 220px;
+}
+.flex-spacer { flex: 1 1 auto; }
+
+/* Stronger table titles */
+.table-title {
+  margin: 12px 0 8px 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: var(--text);
+  background: #E4DECF;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* Lighter table chrome to match titles */
+th { background: #E4DECF; text-align: left; }
+
 /* --- END TWEAK --- */
 
 
@@ -224,4 +253,78 @@ th { background: #E4DECF; text-align: left; } /* same tone as card header */
   75%  { transform: translateY(-3px) scale(1.03); }
   100% { transform: translateY(0); }
 }
+
+/* === Softer text for form controls === */
+
+/* Lighten text for all inputs, selects, and buttons */
+input, select, button {
+  color: #5c554c; /* ~30% lighter than var(--text) */
+}
+
+/* Even lighter placeholder / default option text */
+input::placeholder,
+select option[value=""],
+select option:disabled {
+  color: #8c867e;
+}
+
+/* Optional: lighten the month picker’s text as well */
+input[type="month"] {
+  color: #5c554c;
+}
+
+/* On hover/focus, keep contrast */
+input:focus,
+select:focus,
+button:focus {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* ===== Visual hierarchy polish ===== */
+
+/* Card title styling (h2) already exists; add subtle icon spacing */
+.card h2::before { content: ""; } /* no-op for safety */
+.card h2 { display: flex; align-items: center; gap: 8px; }
+
+/* Stronger sub-section titles for tables (Budget / Transactions) */
+.table-title {
+  margin: 12px 0 8px 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: var(--text);
+  background: #E4DECF;     /* matches your header tone */
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* Row hover for readability */
+table tbody tr:hover {
+  background: #F3EEDD;      /* soft highlight within palette */
+}
+
+/* ===== Button consistency ===== */
+
+button.action {
+  height: 36px;             /* consistent height */
+  padding: 6px 12px;        /* tidy padding */
+  font-weight: 600;         /* slightly bolder for actions */
+  border-radius: 10px;
+}
+
+/* Match the animated “busy” look for any action button */
+button.action.busy {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 0 rgba(166, 173, 102, 0.35);
+  animation: btn-pulse 1100ms ease-in-out infinite,
+             btn-wiggle 1200ms ease-in-out infinite;
+}
+
+/* Keep your existing keyframes; they already exist above */
+
+
 </style>
+
