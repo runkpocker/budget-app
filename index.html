@@ -1,137 +1,341 @@
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <?!= include('styles'); ?>
 <div class="container">
-  <header class="app-header">
-    <h1>🐰 Bunny Balut Budget</h1>
-    <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
-  </header>
+  <header class="app-header">
+    <h1>🐰 Bunny Balut Budget</h1>
+    <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
+  </header>
 
-    <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
-    <div class="modal-panel">
-      <div class="bunny" aria-hidden="true">🐰</div>
-      <div class="modal-text">Hang on to your Bunny Hairs, Daddy is getting the info...</div>
-    </div>
-  </div>
-
-  <section class="cards">
-    <div class="card">
-      <h2>🧮 Summary</h2>
-      <div class="row">
-        <label for="isoMonth">Month</label>
-        <input type="month" id="isoMonth" />
-        <button id="btnApplyMonth" class="action">Set Month</button>
-        <label class="inline" style="margin-left:8px;"><input type="checkbox" id="includeTx" checked> Include Transactions</label>
-        <span id="monthStatus" class="status"></span>
-      </div>
-
-            <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
-        <div class="summary-col"><h3>Actual vs Budget</h3><table id="tblActVsBud"></table></div>
-        <div class="summary-col"><h3>Income</h3><table id="tblIncome"></table></div>
-        <div class="summary-col"><h3>Expense</h3><table id="tblExpense"></table></div>
-      </div>
-          </div>
-  </section>
-
-  
-<div class="card">
-  <h2>🔎 Bunny Data Explorer</h2>
-
-  <div class="row"><span id="dxMonthBadge" class="chip">Month Set: not set</span></div>
-
-  <h3>Data Filters</h3>
-  <!-- Compact filters -->
-  <div class="filter-row compact">
-    <label for="dxType">Type</label>
-    <select id="dxType"></select>
-
-    <label for="dxCat">Category</label>
-    <select id="dxCat"></select>
-
-    <span class="flex-spacer"></span>
-    <button id="dxRefresh" class="action">Refresh Transactions</button>
+  <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
+    <div class="modal-panel">
+      <div class="bunny" aria-hidden="true">🐰</div>
+      <div class="modal-text">Hang on to your Bunny Hairs, Daddy is getting the info...</div>
+    </div>
   </div>
 
-  <h3 class="table-title">Budget</h3>
-  <table id="dxBudgets"></table>
+  <section class="cards">
+    <div class="card">
+      <h2>🧮 Summary</h2>
+      <div class="row">
+        <label for="isoMonth">Month</label>
+        <input type="month" id="isoMonth" />
+        <button id="btnApplyMonth" class="action">Set Month</button>
+        <label class="inline" style="margin-left:8px;">
+          <input type="checkbox" id="includeTx" checked /> Include Transactions
+        </label>
+        <span id="monthStatus" class="status"></span>
+      </div>
 
-  <h3 class="table-title" style="margin-top:16px">Transactions</h3>
-  <table id="dxTx"></table>
+      <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
+        <div class="summary-col">
+          <h3>Actual vs Budget</h3>
+          <div class="table-wrap"><table id="tblActVsBud"></table></div>
+        </div>
+        <div class="summary-col">
+          <h3>Income</h3>
+          <div class="table-wrap"><table id="tblIncome"></table></div>
+        </div>
+        <div class="summary-col">
+          <h3>Expense</h3>
+          <div class="table-wrap"><table id="tblExpense"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="card" id="explorerCard">
+    <h2>🔎 Bunny Data Explorer</h2>
+
+    <div class="row"><span id="dxMonthBadge" class="chip">Month Set: not set</span></div>
+
+    <!-- Segmented tabs for phones -->
+    <div class="seg seg-top" id="dxSeg">
+      <button class="seg-btn active" data-panel="bud">Budget</button>
+      <button class="seg-btn" data-panel="tx">Transactions</button>
+      <span class="flex-spacer"></span>
+      <button id="txViewToggle" class="seg-btn ghost" aria-pressed="false" title="Toggle Cards/Table">Cards</button>
+    </div>
+
+    <h3>Data Filters</h3>
+    <!-- Inline filters (desktop + tablet). This is also the sticky footer row inside the card on phones -->
+    <div class="filter-row compact original" id="dxFiltersOriginal">
+      <label for="dxType">Type</label>
+      <select id="dxType"></select>
+
+      <label for="dxCat">Category</label>
+      <select id="dxCat"></select>
+
+      <span class="flex-spacer"></span>
+      <button id="dxRefresh" class="action">Refresh Transactions</button>
+    </div>
+
+    <h3 class="table-title" style="margin-top:16px">➕ Quick Add</h3>
+<form id="qaForm" class="filter-row compact" autocomplete="off">
+  <label for="qaDate">Date</label>
+  <input id="qaDate" type="date" required>
+
+  <label for="qaType">Type</label>
+  <select id="qaType" required></select>
+
+  <label for="qaCat">Category</label>
+  <select id="qaCat" required></select>
+
+  <label for="qaAmt">Amount</label>
+  <input id="qaAmt" type="number" step="0.01" inputmode="decimal" required>
+
+  <label for="qaAcct">Account</label>
+  <select id="qaAcct" required></select>
+
+  <label for="qaDesc">Desc</label>
+  <input id="qaDesc" type="text" placeholder="Optional">
+
+  <span class="flex-spacer"></span>
+  <button id="qaSubmit" class="action">Add</button>
+</form>
+
+
+    <h3 class="table-title">Budget</h3>
+    <div id="panel-bud">
+      <div class="table-wrap"><table id="dxBudgets"></table></div>
+    </div>
+
+    <h3 class="table-title" style="margin-top:16px">Transactions</h3>
+    <div id="panel-tx">
+      <div class="table-wrap"><table id="dxTx"></table></div>
+      <!-- Cards container for mobile (built from the table DOM) -->
+      <div id="dxTxCards" class="tx-cards hidden"></div>
+    </div>
+  </div>
+
+  <?!= include('client'); ?>
 </div>
 
+<!-- Sticky Explorer helper -->
+<script>
+(function(){
+  var refresh = document.getElementById('dxRefresh');
+  if (!refresh) return;
+  var card = refresh.closest('.card');
+  if (!card) return;
+  card.classList.add('sticky-explorer');
+})();
+</script>
 
+<!-- Size Explorer card to fill remaining viewport -->
+<script>
+(function(){
+  var card = document.getElementById('explorerCard');
+  if (!card) return;
+  function sizeExplorer(){
+    var top = card.getBoundingClientRect().top;
+    var h = Math.max(window.innerHeight - top, 360);
+    card.style.height = h + 'px';
+    card.style.overflow = 'auto';
+  }
+  sizeExplorer();
+  window.addEventListener('resize', sizeExplorer);
+  window.addEventListener('orientationchange', sizeExplorer);
+  document.addEventListener('DOMContentLoaded', sizeExplorer);
+  window.addEventListener('load', sizeExplorer);
+})();
+</script>
 
-  <?!= include('client'); ?>
-</div>
+<!-- Tabs + Cards view for Transactions (no backend changes) -->
+<script>
+(function(){
+  var seg = document.getElementById('dxSeg');
+  var panelBud = document.getElementById('panel-bud');
+  var panelTx  = document.getElementById('panel-tx');
+  var toggle   = document.getElementById('txViewToggle');
+  var txTable  = document.getElementById('dxTx');
+  var txCards  = document.getElementById('dxTxCards');
 
+  // Tabs
+  if (seg && panelBud && panelTx){
+    seg.addEventListener('click', function(e){
+      var b = e.target.closest('.seg-btn[data-panel]');
+      if (!b) return;
+      seg.querySelectorAll('.seg-btn[data-panel]').forEach(x => x.classList.toggle('active', x===b));
+      var which = b.getAttribute('data-panel');
+      panelBud.classList.toggle('hidden', which!=='bud');
+      panelTx.classList.toggle('hidden',  which!=='tx');
+    });
+  }
+
+  // Build cards from #dxTx table
+  function buildCardsFromTable(){
+    if (!txTable || !txCards) return;
+    var thead = txTable.tHead;
+    var tbody = txTable.tBodies[0];
+    if (!thead || !tbody || !thead.rows.length) { txCards.innerHTML = ''; return; }
+
+    var heads = Array.from(thead.rows[0].cells).map(c => (c.textContent||'').trim().toLowerCase());
+    var idx = {
+      date:      heads.findIndex(h => /date/.test(h)),
+      type:      heads.findIndex(h => /^type$/.test(h)),
+      category:  heads.findIndex(h => /category/.test(h)),
+      amount:    heads.findIndex(h => /amount/.test(h))
+    };
+
+    txCards.innerHTML = '';
+    Array.from(tbody.rows).forEach(function(r){
+      var d = (idx.date>=0 && r.cells[idx.date]) ? r.cells[idx.date].textContent.trim() : '';
+      var t = (idx.type>=0 && r.cells[idx.type]) ? r.cells[idx.type].textContent.trim() : '';
+      var c = (idx.category>=0 && r.cells[idx.category]) ? r.cells[idx.category].textContent.trim() : '';
+      var a = (idx.amount>=0 && r.cells[idx.amount]) ? r.cells[idx.amount].textContent.trim() : '';
+
+      var card = document.createElement('div');
+      card.className = 'tx-card ' + ((/income/i.test(t)) ? 'income' : (/expense/i.test(t) ? 'expense' : ''));
+      var main = document.createElement('div'); main.className='tx-main'; main.textContent = c || t || '—';
+      var sub  = document.createElement('div'); sub.className='tx-sub';  sub.textContent = d + (t ? ' · ' + t : '');
+      var amt  = document.createElement('div'); amt.className='tx-amt';  amt.textContent = a || '';
+
+      card.appendChild(main);
+      card.appendChild(amt);
+      card.appendChild(sub);
+
+      txCards.appendChild(card);
+    });
+  }
+
+  // Toggle Cards/Table
+  if (toggle && panelTx){
+    toggle.addEventListener('click', function(){
+      var on = toggle.getAttribute('aria-pressed') === 'true' ? false : true;
+      toggle.setAttribute('aria-pressed', String(on));
+      toggle.textContent = on ? 'Table' : 'Cards';
+      if (on){
+        buildCardsFromTable();
+        txCards.classList.remove('hidden');
+        var wrap = txTable.closest('.table-wrap'); if (wrap) wrap.classList.add('hidden');
+      }else{
+        txCards.classList.add('hidden');
+        var wrap = txTable.closest('.table-wrap'); if (wrap) wrap.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Rebuild cards after month set / refresh complete
+  document.addEventListener('summary-month-set', function(){
+    if (toggle && toggle.getAttribute('aria-pressed') === 'true'){
+      setTimeout(buildCardsFromTable, 250);
+    }
+  });
+  document.addEventListener('dx-refresh-complete', function(){
+    if (toggle && toggle.getAttribute('aria-pressed') === 'true'){
+      setTimeout(buildCardsFromTable, 150);
+    }
+  });
+})();
+</script>
+
+<!-- Shimmer toggler (non-destructive) -->
+<script>
+(function(){
+  if (!window.showBusy || !window.hideBusy) return;
+  var prevShow = window.showBusy, prevHide = window.hideBusy;
+  window.showBusy = function(){
+    try{ document.body.classList.add('bb-busy'); }catch(e){}
+    return prevShow.apply(this, arguments);
+  };
+  window.hideBusy = function(){
+    var r = prevHide.apply(this, arguments);
+    if (!window.loadingCounter || window.loadingCounter <= 0) {
+      try{ document.body.classList.remove('bb-busy'); }catch(e){}
+    }
+    return r;
+  };
+})();
+</script>
+
+<!-- 15s retry hint -->
+<script>
+(function(){
+  var modal = document.getElementById('busyModal');
+  var text  = modal ? modal.querySelector('.modal-text') : null;
+  if (!text || !window.showBusy || !window.hideBusy) return;
+
+  var t = null;
+  function arm(){
+    clearTimeout(t);
+    t = setTimeout(function(){
+      if (window.loadingCounter > 0) {
+        text.textContent = "This carrot patch is thicc 🥕🥕 — still fetching… try again if it stalls.";
+      }
+    }, 15000);
+  }
+
+  var _show = window.showBusy, _hide = window.hideBusy;
+  window.showBusy = function(){ arm(); return _show.apply(this, arguments); };
+  window.hideBusy = function(){
+    var r = _hide.apply(this, arguments);
+    if (!window.loadingCounter || window.loadingCounter <= 0) clearTimeout(t);
+    return r;
+  };
+})();
+</script>
+
+<!-- Set Month handler (unchanged core) -->
 <script>
 (function () {
-  const $ = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
-  const btn  = $('btnApplyMonth') || $('applyButton');
-  const iMonth = $('isoMonth') || $('monthSelect');
-  const status = $('monthStatus');
-  if (!btn) return;
+  const btn    = $('btnApplyMonth') || $('applyButton');
+  const iMonth = $('isoMonth')      || $('monthSelect');
+  const status = $('monthStatus');
+  if (!btn) return;
 
-  function readMonthISO() {
-    if (!iMonth) return '';
-    if (iMonth.type === 'month') return iMonth.value || '';
-    const mm = String(iMonth.value || '').padStart(2, '0');
-    const yyyy = new Date().getFullYear();
-    return mm ? `${yyyy}-${mm}` : '';
-  }
+  function readMonthISO() {
+    if (!iMonth) return '';
+    if (iMonth.type === 'month') return iMonth.value || '';
+    const mm = String(iMonth.value || '').padStart(2, '0');
+    const yyyy = new Date().getFullYear();
+    return mm ? `${yyyy}-${mm}` : '';
+  }
 
-  btn.addEventListener('click', () => {
-    const iso = readMonthISO();
-    if (!iso) { alert('Please select a month first.'); return; }
+  btn.addEventListener('click', () => {
+    const iso = readMonthISO();
+    if (!iso) { alert('Please select a month first.'); return; }
 
-    const prev = btn.textContent;
-    btn.textContent = 'Good Girrrrrl ✨';
-    btn.classList.add('busy');
+    const prev = btn.textContent;
+    btn.textContent = 'Good Girrrrrl ✨';
+    btn.classList.add('busy');
 
-    // --- This is the correct modal logic ---
-    showBusy(); 
-    if (status) status.textContent = '';
-    // --- End modal logic ---
+    showBusy();
+    if (status) status.textContent = '';
 
-    google.script.run
-.withSuccessHandler((res) => {
-  btn.textContent = prev;
-  btn.classList.remove('busy');
+    google.script.run
+      .withSuccessHandler((res) => {
+        btn.textContent = prev;
+        btn.classList.remove('busy');
 
-  // We correctly removed the 'hide modal' call from here
+        if (status) status.textContent = `✓ Set to ${res.b4}`;
 
-  if (status) status.textContent = `✓ Set to ${res.b4}`;
+        if (typeof renderTable === 'function') {
+          renderTable('tblActVsBud', res.actVsBud);
+          renderTable('tblIncome',   res.income);
+          renderTable('tblExpense',  res.expense);
+        }
 
-  // Render the summary tables
-  if (typeof renderTable === 'function') {
-    renderTable('tblActVsBud', res.actVsBud);
-    renderTable('tblIncome', res.income);
-    renderTable('tblExpense', res.expense);
-  }
+        const norm = iso.replace(/^(\d{4})[-\/.](\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2,'0')}`);
+        const includeTx = !!(document.getElementById('includeTx') && document.getElementById('includeTx').checked);
 
-// Bridge to Data Explorer
-const norm = iso.replace(/^(\d{4})[-\/.](\d{1,2})$/, (_, y, m) => `${y}-${String(m).padStart(2,'0')}`);
-const includeTx = !!(document.getElementById('includeTx') && document.getElementById('includeTx').checked);
+        document.dispatchEvent(new CustomEvent('summary-month-set', {
+          detail: { month: norm, includeTx: includeTx, displayMonth: res.b4 }
+        }));
+      })
+      .withFailureHandler((err) => {
+        btn.textContent = prev;
+        btn.classList.remove('busy');
 
-// --- TWEAK 1: Pass the pretty month name ('res.b4') to the event ---
-document.dispatchEvent(new CustomEvent('summary-month-set', { 
-  detail: { 
-    month: norm, 
-    includeTx: includeTx,
-    displayMonth: res.b4 // <-- ADDED THIS LINE
-  } 
-}));
-})
-      .withFailureHandler((err) => {
-        btn.textContent = prev;
-        btn.classList.remove('busy');
-        
-        hideBusy(); // Correctly call this on failure
-        
-        const msg = (err && err.message) ? err.message : 'Unknown error';
-        if (status) status.textContent = 'Error: ' + msg;
-        alert('Set Month failed: ' + msg);
-      })
-      .setSummaryMonthFromIso(iso);
-  });
+        hideBusy(); // only on failure here
+
+        const msg = (err && err.message) ? err.message : 'Unknown error';
+        if (status) status.textContent = 'Error: ' + msg;
+        alert('Set Month failed: ' + msg);
+      })
+      .setSummaryMonthFromIso(iso);
+  });
 })();
 </script>
