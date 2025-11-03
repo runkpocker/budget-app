@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bunny Balut Budget</title>
+
+  <?!= include('styles'); ?>
+  <!-- Force navigation out of any iframe/panel -->
+  <base target="_top">
+
+  <style>
+    body { background: var(--bg, #f7f4f1); color: var(--ink, #3b3532); }
+    .wrap { max-width: 1100px; margin: 28px auto 56px; padding: 0 16px; }
+
+    .brand { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .brand .bun { font-size:28px; line-height:1; filter:drop-shadow(0 1px 0 rgba(0,0,0,.06)); }
+    .brand h1 { font-weight:700; letter-spacing:.2px; font-size:clamp(22px,3.2vw,34px); margin:0; }
+    .tagline { margin:0 0 22px; opacity:.7; font-size:13.5px; }
+
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+    @media (max-width:860px){ .grid{ grid-template-columns:repeat(6,1fr);} }
+    @media (max-width:560px){ .grid{ grid-template-columns:repeat(4,1fr);} }
+
+    .card {
+      grid-column:span 4; background:#fff; border-radius:18px;
+      box-shadow:0 6px 18px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.05);
+      padding:18px 18px 16px; transition:transform .15s, box-shadow .15s; position:relative; overflow:hidden;
+    }
+    .card:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.08); }
+    .card .kicker { display:inline-flex; gap:8px; font-size:13px; font-weight:600; opacity:.75; }
+    .card h3 { font-size:clamp(18px,2.4vw,22px); margin:6px 0 8px; }
+    .card p { margin:0 0 14px; opacity:.8; font-size:14px; }
+    .pill {
+      display:inline-flex; align-items:center; justify-content:center; border-radius:999px;
+      padding:10px 14px; font-weight:600; font-size:14px; background:#efe9e2; border:1px solid rgba(0,0,0,.06);
+      cursor:pointer; user-select:none; transition:background .15s, transform .05s;
+    }
+    .pill:active { transform:translateY(1px); }
+    .pill.primary { background:#ebd8c5; } .pill.primary:hover { background:#e6cfb8; }
+    .pill.neutral:hover { background:#eae4dd; }
+
+    .ribbon {
+      position:absolute; right:-56px; top:14px; width:190px; text-align:center; transform:rotate(20deg);
+      background:#f3edd9; color:#6a615a; border:1px dashed rgba(0,0,0,.15); padding:6px 0; font-size:12px; font-weight:700;
+      box-shadow:0 4px 12px rgba(0,0,0,.05);
+    }
+
+    .nudge { margin-top:28px; font-size:12.5px; opacity:.6; text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="bun">🐰</div>
+      <h1>Bunny Balut Budget</h1>
+    </div>
+    <p class="tagline">Daddy owns you, and your budget 🐾🐾 — pick your adventure:</p>
+
+    <div class="grid">
+      <!-- Card 1: Quick Add -->
+      <section class="card">
+        <span class="kicker">➕ Quick Log</span>
+        <h3>Log Your Purchase, Brat</h3>
+        <p>Add a transaction fast.</p>
+        <a class="pill primary" data-view="index" data-hash="qaForm">Open Quick Add</a>
+      </section>
+
+      <!-- Card 2: Dashboard / Data Explorer -->
+      <section class="card">
+        <span class="kicker">📊 Dashboard</span>
+        <h3>Bunny Dashboard &amp; Transactions</h3>
+        <p>See Dashboard and transactions</p>
+        <a class="pill neutral" data-view="index">Open Dashboard</a>
+      </section>
+
+      <!-- Card 3: Manage Info (placeholder) -->
+      <section class="card">
+        <span class="kicker">🧸 Profile</span>
+        <h3>Manage Bunny Info</h3>
+        <p>Categories, accounts, preferences… all your fluffy settings in one cozy burrow.</p>
+        <div class="ribbon">COMING SOON</div>
+        <button class="pill neutral" type="button" disabled title="Coming soon">Soon™</button>
+      </section>
+    </div>
+
+    <p class="nudge">Links auto-resolve to your current deployment (editor preview, <code>/dev</code>, or <code>/exec</code>). No more <code>/userCodeAppPanel</code> junk.</p>
+  </div>
+
+  <script>
+    // Fill real URLs from the server (always the /dev or /exec base)
+    function wireLinks(base) {
+      document.querySelectorAll('[data-view]').forEach(a => {
+        const view = a.getAttribute('data-view') || 'index';
+        const hash = a.getAttribute('data-hash') ? ('#' + a.getAttribute('data-hash')) : '';
+        const url  = base + (base.includes('?') ? '&' : '?') + 'view=' + encodeURIComponent(view) + hash;
+
+        // Real href for hover + middle-click
+        a.setAttribute('href', url);
+        a.setAttribute('target', '_top');
+
+        a.addEventListener('click', (e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; // allow open-in-new-tab
+          e.preventDefault();
+          // Hard, top-level nav to the proper web-app URL
+          window.top.location.href = url;
+        });
+      });
+    }
+
+    // Ask server for the *real* web-app base URL (fixes /userCodeAppPanel)
+    document.addEventListener('DOMContentLoaded', function () {
+      google.script.run
+        .withSuccessHandler(function (base) { wireLinks(base); })
+        .withFailureHandler(function (err) {
+          console.error('Failed to get web app URL:', err && err.message || err);
+          alert('Could not resolve web-app URL. Is this deployed as a web app?');
+        })
+        .getWebAppBaseUrl();
+    });
+  </script>
+</body>
+</html>
