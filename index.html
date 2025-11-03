@@ -339,3 +339,13 @@
   });
 })();
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (location.hash === '#qaForm') {
+      const el = document.getElementById('qaForm');
+      if (el) { el.scrollIntoView({behavior:'smooth', block:'start'}); }
+      const amt = document.getElementById('qaAmt');
+      if (amt) { try { amt.focus(); } catch(_){} }
+    }
+  });
+</script>

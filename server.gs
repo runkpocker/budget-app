@@ -1,16 +1,35 @@
 // Bunny Balut Budget — "Button Bunny" (single page, validated month setter)
 const SPREADSHEET_ID = '1-KZorvFCZi-Ic7a54hx4p2s0fqM6LHt_wVcSQkxAS6c';
 
-// Serve single-page app (index.html)
+// Returns the currently deployed web app base URL (dev/exec).
+function getWebAppBaseUrl() {
+  var url = ScriptApp.getService().getUrl();
+  if (!url) throw new Error('This script is not deployed as a web app.');
+  return url; // e.g. https://script.google.com/macros/s/.../dev
+}
+
+// Convenience: base + ?view=...
+function getWebAppUrl(view) {
+  var base = getWebAppBaseUrl();
+  var v = String(view || 'index');
+  return base + (base.indexOf('?') > -1 ? '&' : '?') + 'view=' + encodeURIComponent(v);
+}
+
+
+// Serve landing or index based on ?view=...
 function doGet(e) {
   try {
-    return HtmlService.createTemplateFromFile('index')
+    var view = (e && e.parameter && e.parameter.view) || 'landing';
+    var file = (view === 'index') ? 'index' : 'landing';
+
+    return HtmlService.createTemplateFromFile(file)
       .evaluate()
       .setTitle('Bunny Balut Budget')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (err) {
-    const msg = '<pre style="color:#ff8080;background:#1b1b1b;padding:12px;border-radius:8px;">'
-      + 'Renderer failed\n' + String(err) + '</pre>';
+    var msg =
+      '<pre style="color:#ff8080;background:#1b1b1b;padding:12px;border-radius:8px;">' +
+      'Renderer failed\n' + String(err) + '</pre>';
     return HtmlService.createHtmlOutput(msg).setTitle('Bunny Balut Budget');
   }
 }
