@@ -1,330 +1,229 @@
 <style>
-:root {
-  /* Soft mid‑tone earthy palette with slightly darker accents */
-  --mustard:    #EAD999;
-  --sunset:     #F4D1C4;
-  --terracotta: #F0BBA9;
-  --rust:       #C89076;
-  --sage:       #E3E7D5;
-  --olive:      #A6AD66;  /* darker olive for stronger focus */
+/* =========================
+   Theme tokens
+   ========================= */
+:root{
+  --mustard:#EAD999; --sunset:#F4D1C4; --terracotta:#F0BBA9; --rust:#C89076;
+  --sage:#E3E7D5; --olive:#A6AD66;
 
-  /* App tokens */
-  --bg: #EDE9E3;
-  --panel: #F7F4EE;
-  --muted: #8A857A;
-  --text: #3E3A33;
-  --overlay: rgba(0, 0, 0, 0.20);
-  --panel-border: #DDD4C6;
-  --accent: var(--olive);
+  --bg:#EDE9E3; --panel:#F7F4EE; --muted:#8A857A; --text:#3E3A33;
+  --overlay:rgba(0,0,0,.20); --panel-border:#DDD4C6; --accent:var(--olive);
 }
+*{ box-sizing:border-box; }
 
-* { box-sizing: border-box; }
-
-/* --- THIS IS THE CRITICAL SYNTAX FIX --- */
-/* The nested 'body {}' rule has been removed */
-body {
-  margin: 0;
-  font-family: "Book Antiqua", Palatino, "Palatino Linotype", serif;
-  font-size: 14px;
-  line-height: 1.4;
-  background: var(--bg);
-  color: var(--text);
-}
-/* --- END CORRECTION --- */
-
-
-/* ---------- Layout ---------- */
-.container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-.app-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.app-header h1 { margin: 0; font-size: 24px; }
-.app-header .sub { color: var(--muted); }
-.cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.card {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
-.card h2 {
-  margin: 0 0 12px 0;
-  background: #E4DECF; /* slightly darker pastel header */
-  padding: 8px 12px;
-  border-radius: 10px;
-}
-.row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-
-/* --- SUMMARY ALIGNMENT FIX: This rule will now load --- */
-.summary-flex-final { 
-  display: flex; 
-  gap: 12px; 
-  width: 100%;
-}
-.summary-flex-final > .summary-col {
-  flex: 1 1 0; /* Ensures all three columns take up equal space */
+body{
+  margin:0;
+  font-family:"Book Antiqua", Palatino, "Palatino Linotype", serif;
+  font-size:14px; line-height:1.4;
+  background:var(--bg); color:var(--text);
 }
 
-/* Original .grid class (still used by summaryArea) */
-.grid { 
-  display: grid; 
-  gap: 12px; 
-  grid-template-columns: repeat(3, 1fr); 
-} 
+/* ========================= Layout ========================= */
+.container{ max-width:1100px; margin:24px auto; padding:0 16px; }
+.app-header{ position:sticky; top:0; z-index:1000; backdrop-filter:saturate(1.05) blur(2px);
+  background:var(--bg); padding:8px 0; }
+.cards{ display:grid; grid-template-columns:1fr; gap:16px; }
 
-.form input,
-.form select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--panel-border);
-  background: var(--panel);
-  color: var(--text);
-}
+.card{ background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
+  padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+.card h2{ margin:0 0 12px 0; background:#E4DECF; padding:8px 12px; border-radius:10px;
+  display:flex; align-items:center; gap:8px; }
+.row{ display:flex; gap:8px; align-items:center; margin-top:8px; }
 
-/* --- TWEAK 3: New style for filter layout --- */
-.filter-row {
-  display: flex;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
-  gap: 8px 12px; /* Row gap, column gap */
-  align-items: center;
-  margin-top: 8px; /* Added margin */
-}
-.filter-row label {
-  font-weight: 500;
-  color: var(--muted);
-}
-.filter-row select {
-  width: 200px; /* Makes dropdowns smaller */
-  flex-grow: 1; /* Allow them to grow if space is available */
-}
-.filter-row button {
-  flex-grow: 1; /* Allow button to grow */
-  margin-left: auto; /* Pushes button to the right if space is ample */
+/* Summary containers */
+.summary-flex-final{ display:flex; gap:12px; width:100%; }
+.summary-flex-final > .summary-col{ flex:1 1 0; }
+
+/* Legacy grid */
+.grid{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
+
+/* Forms */
+.form input,.form select{
+  width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--panel-border);
+  background:var(--panel); color:var(--text);
 }
 
-/* Compact filter row */
-.filter-row.compact {
-  gap: 8px;
-  margin-top: 4px;
-  align-items: center;
-}
-.filter-row.compact label { font-weight: 600; }
-.filter-row.compact select {
-  width: 180px;       /* tighter */
-  max-width: 220px;
-}
-.flex-spacer { flex: 1 1 auto; }
+/* Filter rows */
+.filter-row{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-top:8px; }
+.filter-row label{ font-weight:500; color:var(--muted); }
+.filter-row select{ width:200px; flex-grow:1; }
+.filter-row button{ flex-grow:1; margin-left:auto; }
+.filter-row.compact{ gap:8px; margin-top:4px; align-items:center; }
+.filter-row.compact label{ font-weight:600; }
+.filter-row.compact select{ width:180px; max-width:220px; }
+.flex-spacer{ flex:1 1 auto; }
 
-/* Stronger table titles */
-.table-title {
-  margin: 12px 0 8px 0;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: .2px;
-  color: var(--text);
-  background: #E4DECF;
-  padding: 6px 10px;
-  border-radius: 8px;
+/* Tabs (mobile segmented control) */
+.seg{ display:flex; gap:8px; align-items:center; margin:8px 0 6px; }
+.seg-btn{
+  border:1px solid var(--panel-border);
+  background:#efe9db;
+  padding:6px 10px;
+  border-radius:10px;
+  font-weight:600;
 }
+.seg-btn.active{ background:#e4decf; }
+.seg-btn.ghost{ background:transparent; }
 
-/* Lighter table chrome to match titles */
-th { background: #E4DECF; text-align: left; }
+/* Table titles */
+.table-title{ margin:12px 0 8px 0; font-size:16px; font-weight:700; letter-spacing:.2px;
+  color:var(--text); background:#E4DECF; padding:6px 10px; border-radius:8px; }
 
-/* --- END TWEAK --- */
+/* ========================= Tables ========================= */
+table{ width:100%; border-collapse:collapse; font-size:13px; background:var(--panel);
+  border-radius:12px; overflow:hidden; }
+th,td{ padding:8px 10px; border-bottom:1px solid var(--panel-border); }
+th{ background:#E4DECF; text-align:left; }
+.table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.table-wrap table{ min-width:0; }
+.table-wrap th{ position:sticky; top:0; z-index:1; background:#E4DECF; }
 
+table tbody tr:hover{ background:#F3EEDD; }
 
-/* ---------- Buttons ---------- */
-button {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--panel-border);
-  background: #E4DECF; /* darker pastel for better contrast */
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+/* ========================= Buttons ========================= */
+button{
+  padding:8px 12px; border-radius:10px; border:1px solid var(--panel-border);
+  background:#E4DECF; color:var(--text); cursor:pointer; transition:all .2s ease-in-out;
 }
-button:hover {
-  border-color: var(--accent);
-  background: #DBD3C2;
-}
+button:hover{ border-color:var(--accent); background:#DBD3C2; }
+button.action{ height:36px; padding:6px 12px; font-weight:600; border-radius:10px; }
 
-button.busy {
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 0 rgba(166, 173, 102, 0.35);
-  animation: btn-pulse 1100ms ease-in-out infinite,
-             btn-wiggle 1200ms ease-in-out infinite;
+button.busy{
+  font-weight:700; letter-spacing:.2px; transform:translateY(-1px);
+  box-shadow:0 0 0 0 rgba(166,173,102,.35);
+  animation:btn-pulse 1100ms ease-in-out infinite, btn-wiggle 1200ms ease-in-out infinite;
 }
-@keyframes btn-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(166, 173, 102, 0.35); }
-  70%  { box-shadow: 0 0 12px 6px rgba(166, 173, 102, 0.2); }
-  100% { box-shadow: 0 0 0 0 rgba(166, 173, 102, 0); }
+@keyframes btn-pulse{
+  0%{ box-shadow:0 0 0 0 rgba(166,173,102,.35); }
+  70%{ box-shadow:0 0 12px 6px rgba(166,173,102,.2); }
+  100%{ box-shadow:0 0 0 0 rgba(166,173,102,0); }
 }
-@keyframes btn-wiggle {
-  0%   { transform: translateY(-1px) rotate(0deg); }
-  30%  { transform: translateY(-1px) rotate(-1.5deg); }
-  60%  { transform: translateY(-1px) rotate(1.5deg); }
-  100% { transform: translateY(-1px) rotate(0deg); }
+@keyframes btn-wiggle{
+  0%{ transform: translateY(-1px) rotate(0); }
+  30%{ transform: translateY(-1px) rotate(-1.5deg); }
+  60%{ transform: translateY(-1px) rotate(1.5deg); }
+  100%{ transform: translateY(-1px) rotate(0); }
 }
 
-/* ---------- Misc ---------- */
-.status { color: var(--muted); margin-left: 8px; }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  background: var(--panel);
-  border-radius: 12px;
-  overflow: hidden;
+/* ========================= Modal ========================= */
+.hidden{ display:none !important; }
+.modal{ position:fixed; inset:0; display:grid; place-items:center; background:var(--overlay);
+  z-index:9999; backdrop-filter:saturate(1.1); }
+.modal-panel{
+  background:#EDE7DC; color:var(--text); border:1px solid var(--panel-border); border-radius:16px;
+  max-width:92vw; padding:12px 20px; box-shadow:0 10px 30px rgba(0,0,0,.15);
+  display:flex; flex-direction:row; align-items:center; justify-content:center; text-align:left; gap:16px;
 }
-th, td { padding: 8px 10px; border-bottom: 1px solid var(--panel-border); }
-th { background: #E4DECF; text-align: left; } /* same tone as card header */
+.bunny{ font-size:34px; line-height:1; animation:bunny-hop 900ms cubic-bezier(.2,.7,.3,1) infinite; }
+.modal-text{ font-size:15px; color:var(--text); }
+@keyframes bunny-hop{
+  0%{ transform: translateY(0) scale(1); }
+  30%{ transform: translateY(-6px) scale(1.05); }
+  55%{ transform: translateY(0) scale(1); }
+  75%{ transform: translateY(-3px) scale(1.03); }
+  100%{ transform: translateY(0); }
+}
 
-/* --- THIS IS THE UPDATED LAYOUT FIX --- */
-/* Responsive design for summary on small screens */
-@media (max-width: 900px) { 
-  .cards { 
-    grid-template-columns: 1fr; /* Stack main cards */
+/* Softer controls */
+input,select,button{ color:#5c554c; }
+input::placeholder, select option[value=""], select option:disabled{ color:#8c867e; }
+input[type="month"]{ color:#5c554c; }
+input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--accent); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .bunny, button.busy{ animation:none; transform:none; }
+}
+
+/* ========================= Responsive ========================= */
+@media (max-width: 900px){
+  .cards{ grid-template-columns:1fr; }
+  .grid{ grid-template-columns:1fr; }
+}
+
+/* Phone breakpoint */
+@media (max-width: 640px){
+  body{ font-size:17px; line-height:1.5; }
+  .container{ padding:0 12px; }
+  .card{ padding:12px; }
+
+  #qaForm { gap: 8px; }
+  #qaForm label { font-size: 12px; }
+  #qaForm input, #qaForm select, #qaForm button { height: 48px; font-size: 16px; }
+
+
+  /* Summary two-up */
+  #summaryArea.summary-flex-final{
+    display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;
   }
-  /* The .summary-flex-final rule was removed from here 
-    to prevent stacking.
-  */
-  .grid {
-    grid-template-columns: 1fr;
+  #summaryArea .summary-col{ min-width:0; }
+
+  .card h2{ font-size:18px; }
+
+  /* Filters tidy */
+  .filter-row{ gap:8px; }
+  .filter-row label{ font-size:12px; }
+  .filter-row select{ width:100%; max-width:none; }
+  .filter-row.compact .field{ width:100%; }
+  .flex-spacer{ display:none; }
+
+  /* Thumb targets */
+  input, select, button{ height:48px; font-size:16px; }
+  button.action{ height:48px; }
+
+  /* Cells */
+  th, td{ padding:10px 12px; }
+
+  /* Transactions: hide Account (2) + Description (6) */
+  #dxTx thead th:nth-child(2),
+  #dxTx tbody td:nth-child(2),
+  #dxTx thead th:nth-child(6),
+  #dxTx tbody td:nth-child(6){ display:none; }
+
+  /* Shimmer skin */
+  .shimmer{ position:relative; overflow:hidden; background:#eee; }
+  .shimmer::after{
+    content:""; position:absolute; inset:0; transform:translateX(-100%);
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+    animation:shimmer 1.2s infinite;
   }
-}
-/* --- END UPDATE --- */
+  body.bb-busy .table-wrap{ min-height:56px; border-radius:8px; background:#efede7; }
 
-/* ---------- Modal ---------- */
-.hidden { display: none !important; }
-.modal {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: var(--overlay);
-  z-index: 9999;
-  backdrop-filter: saturate(1.1);
-}
+  /* Sticky Explorer (class-based) */
+  .sticky-explorer{
+    display:flex; flex-direction:column;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sticky-explorer .table-wrap{
+    flex:1 1 auto;
+    overflow-y:visible;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sticky-explorer .filter-row.compact{
+    position:sticky; bottom:0; z-index:900; background:var(--panel);
+    padding-top:8px; padding-bottom:8px; border-top:1px solid var(--panel-border);
+    box-shadow:0 -6px 16px rgba(0,0,0,.06);
+  }
+  .sticky-explorer .table-wrap{ scroll-margin-bottom:64px; }
 
-/* --- TWEAK 1: Popup Size & Layout --- */
-.modal-panel {
-  background: #EDE7DC; /* darker pastel popup */
-  color: var(--text);
-  border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  
-  max-width: 92vw; /* Add a max width */
-  
-  /* Shrink padding for height */
-  padding: 12px 20px; 
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  display: flex;
-  
-  /* Change to horizontal layout */
-  flex-direction: row; 
-  align-items: center;
-  justify-content: center;
-  text-align: left; /* Align text to the left */
-  gap: 16px; /* Space between bunny and text */
-}
-/* --- END TWEAK --- */
+  /* Tabs refinements */
+  .seg{ position:sticky; top:0; z-index:5; background:var(--panel); padding-top:4px; }
+  #panel-bud.hidden, #panel-tx.hidden{ display:none !important; }
 
-.bunny {
-  font-size: 34px;
-  line-height: 1;
-  animation: bunny-hop 900ms cubic-bezier(.2, .7, .3, 1) infinite;
-}
-.modal-text {
-  font-size: 15px;
-  color: var(--text);
-}
-@keyframes bunny-hop {
-  0%   { transform: translateY(0) scale(1); }
-  30%  { transform: translateY(-6px) scale(1.05); }
-  55%  { transform: translateY(0) scale(1); }
-  75%  { transform: translateY(-3px) scale(1.03); }
-  100% { transform: translateY(0); }
+  /* Transaction cards */
+  .tx-cards{ display:grid; gap:8px; margin-top:8px; }
+  .tx-card{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:12px;
+    padding:10px 12px;
+    display:grid; grid-template-columns:1fr auto; grid-auto-rows:min-content; gap:4px 8px;
+  }
+  .tx-card .tx-main{ font-weight:700; }
+  .tx-card .tx-sub{ color:var(--muted); font-size:13px; grid-column:1 / -1; }
+  .tx-card .tx-amt{ font-weight:700; }
+  .tx-card.income .tx-amt{ color:#1a7f37; }
+  .tx-card.expense .tx-amt{ color:#9b2226; }
 }
 
-/* === Softer text for form controls === */
-
-/* Lighten text for all inputs, selects, and buttons */
-input, select, button {
-  color: #5c554c; /* ~30% lighter than var(--text) */
-}
-
-/* Even lighter placeholder / default option text */
-input::placeholder,
-select option[value=""],
-select option:disabled {
-  color: #8c867e;
-}
-
-/* Optional: lighten the month picker’s text as well */
-input[type="month"] {
-  color: #5c554c;
-}
-
-/* On hover/focus, keep contrast */
-input:focus,
-select:focus,
-button:focus {
-  color: var(--text);
-  border-color: var(--accent);
-}
-
-/* ===== Visual hierarchy polish ===== */
-
-/* Card title styling (h2) already exists; add subtle icon spacing */
-.card h2::before { content: ""; } /* no-op for safety */
-.card h2 { display: flex; align-items: center; gap: 8px; }
-
-/* Stronger sub-section titles for tables (Budget / Transactions) */
-.table-title {
-  margin: 12px 0 8px 0;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: .2px;
-  color: var(--text);
-  background: #E4DECF;     /* matches your header tone */
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-/* Row hover for readability */
-table tbody tr:hover {
-  background: #F3EEDD;      /* soft highlight within palette */
-}
-
-/* ===== Button consistency ===== */
-
-button.action {
-  height: 36px;             /* consistent height */
-  padding: 6px 12px;        /* tidy padding */
-  font-weight: 600;         /* slightly bolder for actions */
-  border-radius: 10px;
-}
-
-/* Match the animated “busy” look for any action button */
-button.action.busy {
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 0 rgba(166, 173, 102, 0.35);
-  animation: btn-pulse 1100ms ease-in-out infinite,
-             btn-wiggle 1200ms ease-in-out infinite;
-}
-
-/* Keep your existing keyframes; they already exist above */
-
-
+@keyframes shimmer{ 100%{ transform: translateX(100%); } }
 </style>
-
