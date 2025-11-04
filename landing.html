@@ -9,31 +9,37 @@
 
   <style>
     :root{
-      --ink:#3b3532; --bg:#f7f4f1; --radius:18px; --gap:12px;
+      --pad:16px;
+      --radius:18px;
+      --ink:#3b3532;
+      --bg:#f7f4f1;
+      --gap:12px;
     }
+
     body{background:var(--bg);color:var(--ink);}
     .wrap{max-width:1100px;margin:28px auto 56px;padding:0 16px;}
 
     /* Header */
     .brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-    .brand .bun{font-size:28px}
-    .brand h1{margin:0;font-weight:800;letter-spacing:.2px;font-size:clamp(22px,3.2vw,34px)}
+    .brand .bun{font-size:28px;}
+    .brand h1{font-weight:700;font-size:clamp(22px,3.2vw,34px);margin:0}
     .tagline{margin:0 0 18px;opacity:.7;font-size:13.5px}
 
-    /* Cards – base */
-    .cards{display:flex;flex-direction:column;gap:var(--gap)}
+    /* Cards default */
+    .cards{display:flex;flex-direction:column;gap:12px}
     .card{
       background:#fff;border-radius:var(--radius);
       box-shadow:0 6px 18px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.05);
       padding:18px;position:relative
     }
-    .kicker{font-weight:700;opacity:.75;font-size:13px}
-    .card h3{margin:8px 0 6px;font-size:18px}
+    .kicker{font-weight:600;opacity:.75;font-size:13px}
+    .card h3{margin:6px 0 6px;font-size:18px}
     .card p{margin:0 0 12px;opacity:.8}
+
     .pill{
       display:inline-flex;align-items:center;justify-content:center;
       padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.06);
-      background:#efe9e2;font-weight:800;cursor:pointer;user-select:none
+      background:#efe9e2;font-weight:700;cursor:pointer
     }
     .pill.primary{background:#ebd8c5}
     .ribbon{
@@ -42,61 +48,12 @@
       background:#f3edd9;color:#6a615a;font-weight:700;font-size:12px
     }
 
-    /* ---------- Desktop/tablet with a mouse only ---------- */
-    /* We guard with (hover:hover) and (pointer:fine) so touch devices DON'T pick these up. */
-    @media (hover:hover) and (pointer:fine) and (min-width:981px){
-      .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-      .card{height:auto}
-    }
-    @media (hover:hover) and (pointer:fine) and (min-width:640px) and (max-width:980px){
-      .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-      .card{height:auto}
+    /* Desktop grid only when truly wide */
+    @media (min-width:1280px){
+      #landing .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     }
 
-/* ---------- Touch devices (phones/tablets): ALWAYS stack & make chunky ---------- */
-@media (hover:none) and (pointer:coarse){
-  #landing .cards{
-    display:flex !important; 
-    flex-direction:column !important; 
-    gap:16px !important;
-  }
-
-  #landing .cards > .card{
-    width:100%; 
-    flex:1 1 0;                    /* equal slices */
-    min-height:22vh;               /* fallback if JS sizing misses */
-    display:flex; 
-    flex-direction:column; 
-    justify-content:center;
-  }
-
-  /* ✅ Typography upgrades (no duplicates) */
-  #landing .card h3 {
-    font-size:1.35rem;  /* ~22px */
-    line-height:1.25;
-    font-weight:700;
-  }
-
-  #landing .card p {
-    font-size:1.05rem;  /* ~16–17px */
-    line-height:1.35;
-    opacity:.85;
-  }
-
-  #landing .kicker {
-    font-size:1rem;     /* ~16px */
-    font-weight:600;
-    opacity:.75;
-  }
-
-  #landing .pill {
-    padding:16px 20px;
-    font-size:1.1rem;   /* ~17–18px */
-    font-weight:700;
-    border-radius:999px;
-  }
-}
-    /* ---------- Quick Add modal (unchanged) ---------- */
+    /* ---------- Quick Add modal ---------- */
     .qa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;z-index:9998}
     .qa-overlay.open{display:flex;}
     .qa-sheet{
@@ -109,17 +66,66 @@
       .qa-overlay{align-items:center;justify-content:center}
       .qa-sheet{width:min(760px,92vw);max-height:86vh;border-radius:22px}
     }
-    .qa-form{display:flex;flex-direction:column;gap:14px}
-    .qa-row{display:flex;gap:12px}
-    .qa-row>*{flex:1}
-    label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
-    select,input[type="date"],input[type="text"],input[type="number"]{
-      width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd;background:#fff
+
+    /* =========================================================
+       TOUCH DEVICES: make cards tall AND scale inner typography
+       ========================================================= */
+    @media (hover:none) and (pointer:coarse){
+
+      /* Bigger header for mobile */
+      #landing .brand h1 {
+        font-size: clamp(1.9rem, 3.2vh + 1.2rem, 3rem);
+        font-weight: 800;
+        line-height: 1.1;
+      }
+
+      #landing .brand .bun {
+        font-size: clamp(2.2rem, 3.5vh + 0.8rem, 3.4rem);
+      }
+
+      #landing .tagline {
+        font-size: clamp(1rem, 1.1vh + 0.6rem, 1.35rem);
+        opacity: .8;
+      }
+
+      /* Full-viewport layout for landing so we can size cards */
+      #landing.wrap{
+        min-height:100svh; display:flex; flex-direction:column;
+        margin:0; padding:8px 12px 12px; box-sizing:border-box;
+      }
+      #landing .brand{margin-bottom:4px}
+      #landing .tagline{margin:0 0 8px}
+
+      /* Column of 3 equal slices */
+      #landing .cards{
+        flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:var(--gap);
+      }
+      #landing .cards > .card{
+        width:100%; flex:1 1 0; min-height:22vh; /* fallback */
+        display:flex; flex-direction:column; justify-content:center; padding:18px;
+      }
+
+      /* ===== Typography that scales with VIEWPORT HEIGHT =====
+         These clamps win against base styles because of specificity.
+         They track the big chunky cards so text feels proportionate. */
+      #landing .cards > .card .kicker{
+        font-size:clamp(60px, 1.2vh + 0.45rem, 18px);
+        font-weight:700; opacity:.78;
+      }
+      #landing .cards > .card h3{
+        font-size:clamp(40px, 4.6vh + 0.6rem, 28px);
+        line-height:1.25; font-weight:800; margin:6px 0 8px;
+      }
+      #landing .cards > .card p{
+        font-size:clamp(20px, 4.6vh + 0.45rem, 19px);
+        line-height:1.4; opacity:.88; margin:0 0 14px;
+      }
+      #landing .cards > .card .pill{
+        padding:clamp(40px, 1.3vh + 8px, 18px) clamp(16px, 1.2vh + 12px, 22px);
+        font-size:clamp(60px, 1.4vh + 0.5rem, 18px);
+        border-radius:999px; font-weight:800;
+      }
     }
-    .qa-actions{display:flex;gap:10px;justify-content:space-between;margin-top:2px}
-    .btn{border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);font-weight:800}
-    .btn.secondary{background:#efe9e2}
-    .btn.primary{background:#ebd8c5}
   </style>
 </head>
 
@@ -131,27 +137,29 @@
     </div>
     <p class="tagline">Daddy owns you, and your budget 🐾🐾 — pick your adventure:</p>
 
-    <div class="cards" id="cards">
+    <div class="cards">
       <section class="card">
         <div class="kicker">➕ Quick Log</div>
         <h3>Log Your Purchase, Brat</h3>
         <p>Add a transaction fast.</p>
-        <button class="pill primary" id="openQA" type="button">Open Quick Add</button>
+        <button class="pill primary" id="openQA">Open Quick Add</button>
       </section>
 
       <section class="card">
         <div class="kicker">📊 Dashboard</div>
         <h3>Bunny Dashboard &amp; Transactions</h3>
         <p>See Dashboard and transactions</p>
-        <a class="pill" href="<?= BASE_URL ?>?view=index" target="_top" rel="noopener">Open Dashboard</a>
+        <a class="pill"
+           href="<?= BASE_URL ?>?view=index"
+           target="_top" rel="noopener">Open Dashboard</a>
       </section>
 
       <section class="card">
-        <div class="kicker">🧸 Profile</div>
+        <div class="kicker">🐰 Profile</div>
         <h3>Manage Bunny Info</h3>
         <p>Categories, accounts, preferences… cozy burrow things.</p>
         <div class="ribbon">COMING SOON</div>
-        <button class="pill" type="button" disabled>Soon™</button>
+        <button class="pill" disabled>Soon™</button>
       </section>
     </div>
   </div>
@@ -160,65 +168,66 @@
   <div class="qa-overlay" id="qaOverlay" aria-hidden="true">
     <aside class="qa-sheet" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
       <div class="qa-head"><div class="qa-grip"></div></div>
-      <div class="qa-title" id="qaTitle">Quick Add</div>
+      <h2 id="qaTitle" class="qa-title" style="text-align:center;margin:10px 0 6px;font-weight:800;">Quick Add</h2>
 
-      <form class="qa-form" id="qaForm">
-        <div class="qa-row">
-          <div><label for="qaDate">Date</label><input id="qaDate" type="date" required></div>
-          <div><label for="qaType">Type</label><select id="qaType" required></select></div>
+      <form class="qa-form" id="qaForm" style="display:flex;flex-direction:column;gap:14px">
+        <div class="qa-row" style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label for="qaDate" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Date</label>
+            <input id="qaDate" type="date" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd">
+          </div>
+          <div style="flex:1">
+            <label for="qaType" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Type</label>
+            <select id="qaType" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd"></select>
+          </div>
         </div>
-        <div class="qa-row">
-          <div><label for="qaCat">Category</label><select id="qaCat" required></select></div>
-          <div><label for="qaAcct">Account</label><select id="qaAcct" required></select></div>
+
+        <div class="qa-row" style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label for="qaCat" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Category</label>
+            <select id="qaCat" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd"></select>
+          </div>
+          <div style="flex:1">
+            <label for="qaAcct" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Account</label>
+            <select id="qaAcct" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd"></select>
+          </div>
         </div>
-        <div class="qa-row">
-          <div><label for="qaAmt">Amount</label><input id="qaAmt" type="number" step="0.01" inputmode="decimal" placeholder="0.00" required></div>
-          <div><label for="qaDesc">Desc (Optional)</label><input id="qaDesc" type="text" placeholder="Optional"></div>
+
+        <div class="qa-row" style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label for="qaAmt" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Amount</label>
+            <input id="qaAmt" type="number" step="0.01" placeholder="0.00" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd">
+          </div>
+          <div style="flex:1">
+            <label for="qaDesc" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Desc</label>
+            <input id="qaDesc" type="text" placeholder="Optional" style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd">
+          </div>
         </div>
-        <div class="qa-actions">
-          <button class="btn secondary" type="button" id="closeQA">Cancel</button>
-          <button class="btn primary" type="submit">Add</button>
+
+        <div class="qa-actions" style="display:flex;gap:10px;justify-content:space-between;margin-top:2px">
+          <button class="btn secondary" type="button" id="closeQA" style="border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);background:#efe9e2;font-weight:800">Cancel</button>
+          <button class="btn primary" type="submit" style="border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);background:#ebd8c5;font-weight:800">Add</button>
         </div>
       </form>
     </aside>
   </div>
 
   <script>
-    // Equal-height cards on touch devices (visualViewport-aware)
-    (function(){
-      const cards = document.getElementById('cards');
-      if (!cards) return;
+    const BASE_URL = '<?= BASE_URL ?>';
 
-      function isTouch(){ return window.matchMedia('(hover:none) and (pointer:coarse)').matches; }
-      function vvh(){ return (window.visualViewport && window.visualViewport.height) || window.innerHeight; }
-
-      function sizeCards(){
-        if (!isTouch()){ cards.style.removeProperty('height'); return; }
-        const rect = cards.getBoundingClientRect();
-        const pad = 12; // breathing room above bottom nav bar
-        const h = Math.max(240, vvh() - rect.top - pad);
-        cards.style.height = h + 'px';  // children are flex:1 -> split equally
-      }
-
-      window.addEventListener('load', sizeCards, { once:true });
-      window.addEventListener('resize', ()=>{ clearTimeout(sizeCards._t); sizeCards._t=setTimeout(sizeCards, 120); });
-      window.addEventListener('orientationchange', sizeCards);
-      if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeCards);
-    })();
-  </script>
-
-  <script>
-    // Quick Add (unchanged)
+    // QA modal
     const overlay = document.getElementById('qaOverlay');
     const openBtn = document.getElementById('openQA');
     const closeBtn = document.getElementById('closeQA');
 
-    function openSheet(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); setTimeout(()=>{ document.getElementById('qaDate')?.focus(); }, 10); }
+    function openSheet(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); setTimeout(()=>document.getElementById('qaDate')?.focus(),10); }
     function closeSheet(){ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); }
-    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closeSheet(); });
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
     openBtn.addEventListener('click', ()=>{ loadMeta(); openSheet(); });
     closeBtn.addEventListener('click', closeSheet);
 
+    // Data loader (same backend as index)
     const elType = document.getElementById('qaType');
     const elCat  = document.getElementById('qaCat');
     const elAcct = document.getElementById('qaAcct');
@@ -226,38 +235,51 @@
     const elAmt  = document.getElementById('qaAmt');
     const elDesc = document.getElementById('qaDesc');
 
-    function fillSelect(sel, values, placeholder){
+    function fillSelect(sel, values = [], placeholder){
       sel.innerHTML = '';
-      if (placeholder){ const o=document.createElement('option'); o.value=''; o.textContent=placeholder; sel.appendChild(o); }
-      (values||[]).forEach(v=>{ const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
+      if (placeholder){
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = placeholder;
+        sel.appendChild(opt);
+      }
+      values.forEach(v=>{
+        const o=document.createElement('option');
+        o.value=o.textContent=v;
+        sel.appendChild(o);
+      });
     }
 
     function loadMeta(){
       google.script.run.withSuccessHandler(({accounts, types})=>{
         fillSelect(elAcct, accounts, 'Choose account');
         fillSelect(elType, types, 'Choose type');
-        const d = new Date();
-        elDate.value = new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        const d=new Date(); elDate.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
         fillSelect(elCat, [], 'Choose category');
       }).getQuickAddMeta();
     }
 
-    function loadCatsForType(type){
-      if (!type){ fillSelect(elCat, [], 'Choose category'); return; }
-      google.script.run.withSuccessHandler(cats=>{ fillSelect(elCat, cats, 'Choose category'); }).listCategoriesByType(type);
-    }
-    elType.addEventListener('change', ()=>loadCatsForType(elType.value));
+    elType.addEventListener('change', ()=>{
+      const t = elType.value;
+      if (!t){ fillSelect(elCat, [], 'Choose category'); return; }
+      google.script.run.withSuccessHandler(cats=>{
+        fillSelect(elCat, cats, 'Choose category');
+      }).listCategoriesByType(t);
+    });
 
     document.getElementById('qaForm').addEventListener('submit', (e)=>{
       e.preventDefault();
-      const payload = {
-        date: elDate.value, type: elType.value, category: elCat.value,
-        amount: elAmt.value, account: elAcct.value, description: elDesc.value
+      const payload={
+        date: elDate.value,
+        type: elType.value,
+        category: elCat.value,
+        amount: elAmt.value,
+        account: elAcct.value,
+        description: elDesc.value
       };
       openBtn.disabled = true;
       google.script.run
         .withSuccessHandler(()=>{ openBtn.disabled=false; closeSheet(); elAmt.value=''; elDesc.value=''; })
-        .withFailureHandler(err=>{ openBtn.disabled=false; alert('Quick Add failed: ' + (err && err.message ? err.message : err)); })
+        .withFailureHandler(err=>{ openBtn.disabled=false; alert('Quick Add failed: ' + (err?.message || err)); })
         .quickAddTransaction(payload);
     });
   </script>
