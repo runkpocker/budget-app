@@ -9,11 +9,7 @@
 
   <style>
     :root{
-      --pad:16px;
-      --radius:18px;
-      --ink:#3b3532;
-      --bg:#f7f4f1;
-      --gap:12px;
+      --ink:#3b3532; --bg:#f7f4f1; --radius:18px; --gap:12px;
     }
     body{background:var(--bg);color:var(--ink);}
     .wrap{max-width:1100px;margin:28px auto 56px;padding:0 16px;}
@@ -21,55 +17,98 @@
     /* Header */
     .brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}
     .brand .bun{font-size:28px}
-    .brand h1{font-weight:700;letter-spacing:.2px;font-size:clamp(22px,3.2vw,34px);margin:0}
+    .brand h1{margin:0;font-weight:800;letter-spacing:.2px;font-size:clamp(22px,3.2vw,34px)}
     .tagline{margin:0 0 18px;opacity:.7;font-size:13.5px}
 
-    /* Cards */
-    .cards{display:flex;flex-direction:column;gap:12px}
+    /* Cards – base */
+    .cards{display:flex;flex-direction:column;gap:var(--gap)}
     .card{
       background:#fff;border-radius:var(--radius);
       box-shadow:0 6px 18px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.05);
       padding:18px;position:relative
     }
-    .kicker{font-weight:600;opacity:.75;font-size:13px}
-    .card h3{margin:6px 0 6px;font-size:18px}
+    .kicker{font-weight:700;opacity:.75;font-size:13px}
+    .card h3{margin:8px 0 6px;font-size:18px}
     .card p{margin:0 0 12px;opacity:.8}
-
     .pill{
       display:inline-flex;align-items:center;justify-content:center;
       padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.06);
-      background:#efe9e2;font-weight:700;cursor:pointer;user-select:none
+      background:#efe9e2;font-weight:800;cursor:pointer;user-select:none
     }
     .pill.primary{background:#ebd8c5}
-    .pill:hover{filter:brightness(.98)}
     .ribbon{
       position:absolute;right:-48px;top:12px;transform:rotate(20deg);
       padding:6px 0;width:160px;text-align:center;border:1px dashed rgba(0,0,0,.15);
       background:#f3edd9;color:#6a615a;font-weight:700;font-size:12px
     }
 
-    /* Force vertical stack <= 1024px */
-    #landing .cards{display:flex;flex-direction:column;gap:var(--gap)}
-    @media (min-width:1280px){
-      #landing .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-      #landing .card{grid-column:auto}
+    /* ---------- Desktop/tablet with a mouse only ---------- */
+    /* We guard with (hover:hover) and (pointer:fine) so touch devices DON'T pick these up. */
+    @media (hover:hover) and (pointer:fine) and (min-width:981px){
+      .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+      .card{height:auto}
+    }
+    @media (hover:hover) and (pointer:fine) and (min-width:640px) and (max-width:980px){
+      .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+      .card{height:auto}
     }
 
-    /* ---------- Quick Add modal ---------- */
-    .qa-overlay{
-      position:fixed;inset:0;background:rgba(0,0,0,.35);
-      display:none;align-items:flex-end;z-index:9998;
-    }
+/* ---------- Touch devices (phones/tablets): ALWAYS stack & make chunky ---------- */
+@media (hover:none) and (pointer:coarse){
+  #landing .cards{
+    display:flex !important; 
+    flex-direction:column !important; 
+    gap:16px !important;
+  }
+
+  #landing .cards > .card{
+    width:100%; 
+    flex:1 1 0;                    /* equal slices */
+    min-height:22vh;               /* fallback if JS sizing misses */
+    display:flex; 
+    flex-direction:column; 
+    justify-content:center;
+  }
+
+  /* ✅ Typography upgrades (no duplicates) */
+  #landing .card h3 {
+    font-size:1.35rem;  /* ~22px */
+    line-height:1.25;
+    font-weight:700;
+  }
+
+  #landing .card p {
+    font-size:1.05rem;  /* ~16–17px */
+    line-height:1.35;
+    opacity:.85;
+  }
+
+  #landing .kicker {
+    font-size:1rem;     /* ~16px */
+    font-weight:600;
+    opacity:.75;
+  }
+
+  #landing .pill {
+    padding:16px 20px;
+    font-size:1.1rem;   /* ~17–18px */
+    font-weight:700;
+    border-radius:999px;
+  }
+}
+    /* ---------- Quick Add modal (unchanged) ---------- */
+    .qa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;z-index:9998}
     .qa-overlay.open{display:flex;}
     .qa-sheet{
       width:100%;max-height:100vh;overflow:auto;background:#fff;
       border-top-left-radius:22px;border-top-right-radius:22px;
-      padding:18px 16px 20px;z-index:9999;
-      animation:slideUp .22s ease;
+      padding:18px 16px 20px;z-index:9999;animation:slideUp .22s ease;
     }
-    @keyframes slideUp{from{transform:translateY(16px);opacity:.9}to{transform:translateY(0);opacity:1}}
-
-    /* Form bits */
+    @keyframes slideUp{from{transform:translateY(16px);opacity:.85}to{transform:translateY(0);opacity:1}}
+    @media (min-width:980px){
+      .qa-overlay{align-items:center;justify-content:center}
+      .qa-sheet{width:min(760px,92vw);max-height:86vh;border-radius:22px}
+    }
     .qa-form{display:flex;flex-direction:column;gap:14px}
     .qa-row{display:flex;gap:12px}
     .qa-row>*{flex:1}
@@ -81,33 +120,6 @@
     .btn{border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);font-weight:800}
     .btn.secondary{background:#efe9e2}
     .btn.primary{background:#ebd8c5}
-
-    /* Desktop modal */
-    @media (min-width:980px){
-      .qa-overlay{align-items:center;justify-content:center}
-      .qa-sheet{width:min(760px,92vw);max-height:86vh;border-radius:22px}
-    }
-
-    /* ===== Mobile: make 3 cards fill the screen in equal thirds ===== */
-    @media (max-width:640px){
-      html,body{height:100%;overflow-x:hidden}
-      #landing.wrap{
-        min-height:calc(var(--vh, 1vh) * 100);
-        display:flex;flex-direction:column;box-sizing:border-box;
-        margin:0;padding:8px 12px 12px;
-      }
-      #landing .brand{margin-bottom:4px}
-      #landing .tagline{margin:0 0 8px}
-
-      #landing .cards{
-        flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:var(--gap)
-      }
-      /* height is driven by --cardsHeight, set by JS */
-      #landing .card{
-        display:flex;flex-direction:column;justify-content:center;padding:16px;
-        min-height:calc((var(--cardsHeight, 0px) - (2 * var(--gap))) / 3);
-      }
-    }
   </style>
 </head>
 
@@ -119,7 +131,7 @@
     </div>
     <p class="tagline">Daddy owns you, and your budget 🐾🐾 — pick your adventure:</p>
 
-    <div class="cards">
+    <div class="cards" id="cards">
       <section class="card">
         <div class="kicker">➕ Quick Log</div>
         <h3>Log Your Purchase, Brat</h3>
@@ -131,7 +143,6 @@
         <div class="kicker">📊 Dashboard</div>
         <h3>Bunny Dashboard &amp; Transactions</h3>
         <p>See Dashboard and transactions</p>
-        <!-- anchor uses canonical /dev|/exec + view=index, opens top frame -->
         <a class="pill" href="<?= BASE_URL ?>?view=index" target="_top" rel="noopener">Open Dashboard</a>
       </section>
 
@@ -148,45 +159,22 @@
   <!-- Quick Add -->
   <div class="qa-overlay" id="qaOverlay" aria-hidden="true">
     <aside class="qa-sheet" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
-      <div class="qa-head" style="display:flex;justify-content:center">
-        <div class="qa-grip" style="width:46px;height:5px;border-radius:999px;background:#e6e1dc;"></div>
-      </div>
-      <h3 id="qaTitle" style="text-align:center;margin:4px 0 10px">Quick Add</h3>
+      <div class="qa-head"><div class="qa-grip"></div></div>
+      <div class="qa-title" id="qaTitle">Quick Add</div>
 
       <form class="qa-form" id="qaForm">
         <div class="qa-row">
-          <div>
-            <label for="qaDate">Date</label>
-            <input id="qaDate" type="date" required>
-          </div>
-          <div>
-            <label for="qaType">Type</label>
-            <select id="qaType" required></select>
-          </div>
+          <div><label for="qaDate">Date</label><input id="qaDate" type="date" required></div>
+          <div><label for="qaType">Type</label><select id="qaType" required></select></div>
         </div>
-
         <div class="qa-row">
-          <div>
-            <label for="qaCat">Category</label>
-            <select id="qaCat" required></select>
-          </div>
-          <div>
-            <label for="qaAcct">Account</label>
-            <select id="qaAcct" required></select>
-          </div>
+          <div><label for="qaCat">Category</label><select id="qaCat" required></select></div>
+          <div><label for="qaAcct">Account</label><select id="qaAcct" required></select></div>
         </div>
-
         <div class="qa-row">
-          <div>
-            <label for="qaAmt">Amount</label>
-            <input id="qaAmt" type="number" step="0.01" inputmode="decimal" placeholder="0.00" required>
-          </div>
-          <div>
-            <label for="qaDesc">Desc (Optional)</label>
-            <input id="qaDesc" type="text" placeholder="Optional">
-          </div>
+          <div><label for="qaAmt">Amount</label><input id="qaAmt" type="number" step="0.01" inputmode="decimal" placeholder="0.00" required></div>
+          <div><label for="qaDesc">Desc (Optional)</label><input id="qaDesc" type="text" placeholder="Optional"></div>
         </div>
-
         <div class="qa-actions">
           <button class="btn secondary" type="button" id="closeQA">Cancel</button>
           <button class="btn primary" type="submit">Add</button>
@@ -196,28 +184,41 @@
   </div>
 
   <script>
-    // env-aware base url available server-side
-    const BASE_URL = '<?= BASE_URL ?>';
+    // Equal-height cards on touch devices (visualViewport-aware)
+    (function(){
+      const cards = document.getElementById('cards');
+      if (!cards) return;
 
-    // ----- Quick Add modal wiring -----
+      function isTouch(){ return window.matchMedia('(hover:none) and (pointer:coarse)').matches; }
+      function vvh(){ return (window.visualViewport && window.visualViewport.height) || window.innerHeight; }
+
+      function sizeCards(){
+        if (!isTouch()){ cards.style.removeProperty('height'); return; }
+        const rect = cards.getBoundingClientRect();
+        const pad = 12; // breathing room above bottom nav bar
+        const h = Math.max(240, vvh() - rect.top - pad);
+        cards.style.height = h + 'px';  // children are flex:1 -> split equally
+      }
+
+      window.addEventListener('load', sizeCards, { once:true });
+      window.addEventListener('resize', ()=>{ clearTimeout(sizeCards._t); sizeCards._t=setTimeout(sizeCards, 120); });
+      window.addEventListener('orientationchange', sizeCards);
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeCards);
+    })();
+  </script>
+
+  <script>
+    // Quick Add (unchanged)
     const overlay = document.getElementById('qaOverlay');
     const openBtn = document.getElementById('openQA');
     const closeBtn = document.getElementById('closeQA');
 
-    function openSheet(){
-      overlay.classList.add('open');
-      overlay.setAttribute('aria-hidden','false');
-      setTimeout(()=>document.getElementById('qaDate')?.focus(), 10);
-    }
-    function closeSheet(){
-      overlay.classList.remove('open');
-      overlay.setAttribute('aria-hidden','true');
-    }
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
+    function openSheet(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); setTimeout(()=>{ document.getElementById('qaDate')?.focus(); }, 10); }
+    function closeSheet(){ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); }
+    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closeSheet(); });
     openBtn.addEventListener('click', ()=>{ loadMeta(); openSheet(); });
-    closeBtn?.addEventListener('click', closeSheet);
+    closeBtn.addEventListener('click', closeSheet);
 
-    // ----- Data for Quick Add -----
     const elType = document.getElementById('qaType');
     const elCat  = document.getElementById('qaCat');
     const elAcct = document.getElementById('qaAcct');
@@ -227,85 +228,38 @@
 
     function fillSelect(sel, values, placeholder){
       sel.innerHTML = '';
-      if (placeholder){
-        const opt = document.createElement('option');
-        opt.value = ''; opt.textContent = placeholder;
-        sel.appendChild(opt);
-      }
-      (values||[]).forEach(v=>{
-        const o = document.createElement('option');
-        o.value = o.textContent = v;
-        sel.appendChild(o);
-      });
+      if (placeholder){ const o=document.createElement('option'); o.value=''; o.textContent=placeholder; sel.appendChild(o); }
+      (values||[]).forEach(v=>{ const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
     }
 
     function loadMeta(){
       google.script.run.withSuccessHandler(({accounts, types})=>{
         fillSelect(elAcct, accounts, 'Choose account');
         fillSelect(elType, types, 'Choose type');
-        // local today
         const d = new Date();
         elDate.value = new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
         fillSelect(elCat, [], 'Choose category');
       }).getQuickAddMeta();
     }
 
-    elType.addEventListener('change', ()=>{
-      const t = elType.value;
-      if (!t){ fillSelect(elCat, [], 'Choose category'); return; }
-      google.script.run.withSuccessHandler(cats=>{
-        fillSelect(elCat, cats, 'Choose category');
-      }).listCategoriesByType(t);
-    });
+    function loadCatsForType(type){
+      if (!type){ fillSelect(elCat, [], 'Choose category'); return; }
+      google.script.run.withSuccessHandler(cats=>{ fillSelect(elCat, cats, 'Choose category'); }).listCategoriesByType(type);
+    }
+    elType.addEventListener('change', ()=>loadCatsForType(elType.value));
 
     document.getElementById('qaForm').addEventListener('submit', (e)=>{
       e.preventDefault();
       const payload = {
-        date: elDate.value,
-        type: elType.value,
-        category: elCat.value,
-        amount: elAmt.value,
-        account: elAcct.value,
-        description: elDesc.value
+        date: elDate.value, type: elType.value, category: elCat.value,
+        amount: elAmt.value, account: elAcct.value, description: elDesc.value
       };
       openBtn.disabled = true;
       google.script.run
         .withSuccessHandler(()=>{ openBtn.disabled=false; closeSheet(); elAmt.value=''; elDesc.value=''; })
-        .withFailureHandler(err=>{ openBtn.disabled=false; alert('Quick Add failed: ' + (err?.message || err)); })
+        .withFailureHandler(err=>{ openBtn.disabled=false; alert('Quick Add failed: ' + (err && err.message ? err.message : err)); })
         .quickAddTransaction(payload);
     });
-
-    // ----- Equal-thirds card layout logic (mobile) -----
-    (function(){
-      const setVH = () => {
-        const vh = (window.visualViewport?.height || window.innerHeight) * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-      };
-
-      function sizeCards(){
-        if (!window.matchMedia('(max-width:640px)').matches) {
-          document.documentElement.style.removeProperty('--cardsHeight');
-          return;
-        }
-        const cards = document.querySelector('#landing .cards');
-        if (!cards) return;
-        const top = cards.getBoundingClientRect().top;
-        const hh  = (window.visualViewport?.height || window.innerHeight);
-        const avail = Math.max(240, Math.round(hh - top - 8)); // tiny cushion for OS bar
-        document.documentElement.style.setProperty('--cardsHeight', `${avail}px`);
-      }
-
-      const resched = () => { clearTimeout(sizeCards._t); sizeCards._t = setTimeout(()=>{ setVH(); sizeCards(); }, 120); };
-
-      window.addEventListener('load', ()=>{ setVH(); sizeCards(); });
-      window.addEventListener('resize', resched);
-      window.addEventListener('orientationchange', resched);
-      if (window.visualViewport){
-        window.visualViewport.addEventListener('resize', resched);
-        window.visualViewport.addEventListener('scroll', resched);
-      }
-      document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible') resched(); });
-    })();
   </script>
 </body>
 </html>
