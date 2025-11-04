@@ -2,122 +2,310 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bunny Balut Budget</title>
 
   <?!= include('styles'); ?>
-  <!-- Force navigation out of any iframe/panel -->
-  <base target="_top">
 
   <style>
-    body { background: var(--bg, #f7f4f1); color: var(--ink, #3b3532); }
-    .wrap { max-width: 1100px; margin: 28px auto 56px; padding: 0 16px; }
+    :root{
+      --pad:16px;
+      --radius:18px;
+      --ink:#3b3532;
+      --bg:#f7f4f1;
+      --gap:12px;
+    }
+    body{background:var(--bg);color:var(--ink);}
+    .wrap{max-width:1100px;margin:28px auto 56px;padding:0 16px;}
 
-    .brand { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-    .brand .bun { font-size:28px; line-height:1; filter:drop-shadow(0 1px 0 rgba(0,0,0,.06)); }
-    .brand h1 { font-weight:700; letter-spacing:.2px; font-size:clamp(22px,3.2vw,34px); margin:0; }
-    .tagline { margin:0 0 22px; opacity:.7; font-size:13.5px; }
+    /* Header */
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .brand .bun{font-size:28px}
+    .brand h1{font-weight:700;letter-spacing:.2px;font-size:clamp(22px,3.2vw,34px);margin:0}
+    .tagline{margin:0 0 18px;opacity:.7;font-size:13.5px}
 
-    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
-    @media (max-width:860px){ .grid{ grid-template-columns:repeat(6,1fr);} }
-    @media (max-width:560px){ .grid{ grid-template-columns:repeat(4,1fr);} }
-
-    .card {
-      grid-column:span 4; background:#fff; border-radius:18px;
+    /* Cards */
+    .cards{display:flex;flex-direction:column;gap:12px}
+    .card{
+      background:#fff;border-radius:var(--radius);
       box-shadow:0 6px 18px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.05);
-      padding:18px 18px 16px; transition:transform .15s, box-shadow .15s; position:relative; overflow:hidden;
+      padding:18px;position:relative
     }
-    .card:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.08); }
-    .card .kicker { display:inline-flex; gap:8px; font-size:13px; font-weight:600; opacity:.75; }
-    .card h3 { font-size:clamp(18px,2.4vw,22px); margin:6px 0 8px; }
-    .card p { margin:0 0 14px; opacity:.8; font-size:14px; }
-    .pill {
-      display:inline-flex; align-items:center; justify-content:center; border-radius:999px;
-      padding:10px 14px; font-weight:600; font-size:14px; background:#efe9e2; border:1px solid rgba(0,0,0,.06);
-      cursor:pointer; user-select:none; transition:background .15s, transform .05s;
-    }
-    .pill:active { transform:translateY(1px); }
-    .pill.primary { background:#ebd8c5; } .pill.primary:hover { background:#e6cfb8; }
-    .pill.neutral:hover { background:#eae4dd; }
+    .kicker{font-weight:600;opacity:.75;font-size:13px}
+    .card h3{margin:6px 0 6px;font-size:18px}
+    .card p{margin:0 0 12px;opacity:.8}
 
-    .ribbon {
-      position:absolute; right:-56px; top:14px; width:190px; text-align:center; transform:rotate(20deg);
-      background:#f3edd9; color:#6a615a; border:1px dashed rgba(0,0,0,.15); padding:6px 0; font-size:12px; font-weight:700;
-      box-shadow:0 4px 12px rgba(0,0,0,.05);
+    .pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.06);
+      background:#efe9e2;font-weight:700;cursor:pointer;user-select:none
+    }
+    .pill.primary{background:#ebd8c5}
+    .pill:hover{filter:brightness(.98)}
+    .ribbon{
+      position:absolute;right:-48px;top:12px;transform:rotate(20deg);
+      padding:6px 0;width:160px;text-align:center;border:1px dashed rgba(0,0,0,.15);
+      background:#f3edd9;color:#6a615a;font-weight:700;font-size:12px
     }
 
-    .nudge { margin-top:28px; font-size:12.5px; opacity:.6; text-align:center; }
+    /* Force vertical stack <= 1024px */
+    #landing .cards{display:flex;flex-direction:column;gap:var(--gap)}
+    @media (min-width:1280px){
+      #landing .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+      #landing .card{grid-column:auto}
+    }
+
+    /* ---------- Quick Add modal ---------- */
+    .qa-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:flex-end;z-index:9998;
+    }
+    .qa-overlay.open{display:flex;}
+    .qa-sheet{
+      width:100%;max-height:100vh;overflow:auto;background:#fff;
+      border-top-left-radius:22px;border-top-right-radius:22px;
+      padding:18px 16px 20px;z-index:9999;
+      animation:slideUp .22s ease;
+    }
+    @keyframes slideUp{from{transform:translateY(16px);opacity:.9}to{transform:translateY(0);opacity:1}}
+
+    /* Form bits */
+    .qa-form{display:flex;flex-direction:column;gap:14px}
+    .qa-row{display:flex;gap:12px}
+    .qa-row>*{flex:1}
+    label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+    select,input[type="date"],input[type="text"],input[type="number"]{
+      width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd;background:#fff
+    }
+    .qa-actions{display:flex;gap:10px;justify-content:space-between;margin-top:2px}
+    .btn{border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);font-weight:800}
+    .btn.secondary{background:#efe9e2}
+    .btn.primary{background:#ebd8c5}
+
+    /* Desktop modal */
+    @media (min-width:980px){
+      .qa-overlay{align-items:center;justify-content:center}
+      .qa-sheet{width:min(760px,92vw);max-height:86vh;border-radius:22px}
+    }
+
+    /* ===== Mobile: make 3 cards fill the screen in equal thirds ===== */
+    @media (max-width:640px){
+      html,body{height:100%;overflow-x:hidden}
+      #landing.wrap{
+        min-height:calc(var(--vh, 1vh) * 100);
+        display:flex;flex-direction:column;box-sizing:border-box;
+        margin:0;padding:8px 12px 12px;
+      }
+      #landing .brand{margin-bottom:4px}
+      #landing .tagline{margin:0 0 8px}
+
+      #landing .cards{
+        flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:var(--gap)
+      }
+      /* height is driven by --cardsHeight, set by JS */
+      #landing .card{
+        display:flex;flex-direction:column;justify-content:center;padding:16px;
+        min-height:calc((var(--cardsHeight, 0px) - (2 * var(--gap))) / 3);
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
+  <div id="landing" class="wrap">
     <div class="brand">
       <div class="bun">🐰</div>
       <h1>Bunny Balut Budget</h1>
     </div>
     <p class="tagline">Daddy owns you, and your budget 🐾🐾 — pick your adventure:</p>
 
-    <div class="grid">
-      <!-- Card 1: Quick Add -->
+    <div class="cards">
       <section class="card">
-        <span class="kicker">➕ Quick Log</span>
+        <div class="kicker">➕ Quick Log</div>
         <h3>Log Your Purchase, Brat</h3>
         <p>Add a transaction fast.</p>
-        <a class="pill primary" data-view="index" data-hash="qaForm">Open Quick Add</a>
+        <button class="pill primary" id="openQA" type="button">Open Quick Add</button>
       </section>
 
-      <!-- Card 2: Dashboard / Data Explorer -->
       <section class="card">
-        <span class="kicker">📊 Dashboard</span>
+        <div class="kicker">📊 Dashboard</div>
         <h3>Bunny Dashboard &amp; Transactions</h3>
         <p>See Dashboard and transactions</p>
-        <a class="pill neutral" data-view="index">Open Dashboard</a>
+        <!-- anchor uses canonical /dev|/exec + view=index, opens top frame -->
+        <a class="pill" href="<?= BASE_URL ?>?view=index" target="_top" rel="noopener">Open Dashboard</a>
       </section>
 
-      <!-- Card 3: Manage Info (placeholder) -->
       <section class="card">
-        <span class="kicker">🧸 Profile</span>
+        <div class="kicker">🧸 Profile</div>
         <h3>Manage Bunny Info</h3>
-        <p>Categories, accounts, preferences… all your fluffy settings in one cozy burrow.</p>
+        <p>Categories, accounts, preferences… cozy burrow things.</p>
         <div class="ribbon">COMING SOON</div>
-        <button class="pill neutral" type="button" disabled title="Coming soon">Soon™</button>
+        <button class="pill" type="button" disabled>Soon™</button>
       </section>
     </div>
+  </div>
 
-    <p class="nudge">Links auto-resolve to your current deployment (editor preview, <code>/dev</code>, or <code>/exec</code>). No more <code>/userCodeAppPanel</code> junk.</p>
+  <!-- Quick Add -->
+  <div class="qa-overlay" id="qaOverlay" aria-hidden="true">
+    <aside class="qa-sheet" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
+      <div class="qa-head" style="display:flex;justify-content:center">
+        <div class="qa-grip" style="width:46px;height:5px;border-radius:999px;background:#e6e1dc;"></div>
+      </div>
+      <h3 id="qaTitle" style="text-align:center;margin:4px 0 10px">Quick Add</h3>
+
+      <form class="qa-form" id="qaForm">
+        <div class="qa-row">
+          <div>
+            <label for="qaDate">Date</label>
+            <input id="qaDate" type="date" required>
+          </div>
+          <div>
+            <label for="qaType">Type</label>
+            <select id="qaType" required></select>
+          </div>
+        </div>
+
+        <div class="qa-row">
+          <div>
+            <label for="qaCat">Category</label>
+            <select id="qaCat" required></select>
+          </div>
+          <div>
+            <label for="qaAcct">Account</label>
+            <select id="qaAcct" required></select>
+          </div>
+        </div>
+
+        <div class="qa-row">
+          <div>
+            <label for="qaAmt">Amount</label>
+            <input id="qaAmt" type="number" step="0.01" inputmode="decimal" placeholder="0.00" required>
+          </div>
+          <div>
+            <label for="qaDesc">Desc (Optional)</label>
+            <input id="qaDesc" type="text" placeholder="Optional">
+          </div>
+        </div>
+
+        <div class="qa-actions">
+          <button class="btn secondary" type="button" id="closeQA">Cancel</button>
+          <button class="btn primary" type="submit">Add</button>
+        </div>
+      </form>
+    </aside>
   </div>
 
   <script>
-    // Fill real URLs from the server (always the /dev or /exec base)
-    function wireLinks(base) {
-      document.querySelectorAll('[data-view]').forEach(a => {
-        const view = a.getAttribute('data-view') || 'index';
-        const hash = a.getAttribute('data-hash') ? ('#' + a.getAttribute('data-hash')) : '';
-        const url  = base + (base.includes('?') ? '&' : '?') + 'view=' + encodeURIComponent(view) + hash;
+    // env-aware base url available server-side
+    const BASE_URL = '<?= BASE_URL ?>';
 
-        // Real href for hover + middle-click
-        a.setAttribute('href', url);
-        a.setAttribute('target', '_top');
+    // ----- Quick Add modal wiring -----
+    const overlay = document.getElementById('qaOverlay');
+    const openBtn = document.getElementById('openQA');
+    const closeBtn = document.getElementById('closeQA');
 
-        a.addEventListener('click', (e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; // allow open-in-new-tab
-          e.preventDefault();
-          // Hard, top-level nav to the proper web-app URL
-          window.top.location.href = url;
-        });
+    function openSheet(){
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden','false');
+      setTimeout(()=>document.getElementById('qaDate')?.focus(), 10);
+    }
+    function closeSheet(){
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden','true');
+    }
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
+    openBtn.addEventListener('click', ()=>{ loadMeta(); openSheet(); });
+    closeBtn?.addEventListener('click', closeSheet);
+
+    // ----- Data for Quick Add -----
+    const elType = document.getElementById('qaType');
+    const elCat  = document.getElementById('qaCat');
+    const elAcct = document.getElementById('qaAcct');
+    const elDate = document.getElementById('qaDate');
+    const elAmt  = document.getElementById('qaAmt');
+    const elDesc = document.getElementById('qaDesc');
+
+    function fillSelect(sel, values, placeholder){
+      sel.innerHTML = '';
+      if (placeholder){
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = placeholder;
+        sel.appendChild(opt);
+      }
+      (values||[]).forEach(v=>{
+        const o = document.createElement('option');
+        o.value = o.textContent = v;
+        sel.appendChild(o);
       });
     }
 
-    // Ask server for the *real* web-app base URL (fixes /userCodeAppPanel)
-    document.addEventListener('DOMContentLoaded', function () {
-      google.script.run
-        .withSuccessHandler(function (base) { wireLinks(base); })
-        .withFailureHandler(function (err) {
-          console.error('Failed to get web app URL:', err && err.message || err);
-          alert('Could not resolve web-app URL. Is this deployed as a web app?');
-        })
-        .getWebAppBaseUrl();
+    function loadMeta(){
+      google.script.run.withSuccessHandler(({accounts, types})=>{
+        fillSelect(elAcct, accounts, 'Choose account');
+        fillSelect(elType, types, 'Choose type');
+        // local today
+        const d = new Date();
+        elDate.value = new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        fillSelect(elCat, [], 'Choose category');
+      }).getQuickAddMeta();
+    }
+
+    elType.addEventListener('change', ()=>{
+      const t = elType.value;
+      if (!t){ fillSelect(elCat, [], 'Choose category'); return; }
+      google.script.run.withSuccessHandler(cats=>{
+        fillSelect(elCat, cats, 'Choose category');
+      }).listCategoriesByType(t);
     });
+
+    document.getElementById('qaForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const payload = {
+        date: elDate.value,
+        type: elType.value,
+        category: elCat.value,
+        amount: elAmt.value,
+        account: elAcct.value,
+        description: elDesc.value
+      };
+      openBtn.disabled = true;
+      google.script.run
+        .withSuccessHandler(()=>{ openBtn.disabled=false; closeSheet(); elAmt.value=''; elDesc.value=''; })
+        .withFailureHandler(err=>{ openBtn.disabled=false; alert('Quick Add failed: ' + (err?.message || err)); })
+        .quickAddTransaction(payload);
+    });
+
+    // ----- Equal-thirds card layout logic (mobile) -----
+    (function(){
+      const setVH = () => {
+        const vh = (window.visualViewport?.height || window.innerHeight) * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      };
+
+      function sizeCards(){
+        if (!window.matchMedia('(max-width:640px)').matches) {
+          document.documentElement.style.removeProperty('--cardsHeight');
+          return;
+        }
+        const cards = document.querySelector('#landing .cards');
+        if (!cards) return;
+        const top = cards.getBoundingClientRect().top;
+        const hh  = (window.visualViewport?.height || window.innerHeight);
+        const avail = Math.max(240, Math.round(hh - top - 8)); // tiny cushion for OS bar
+        document.documentElement.style.setProperty('--cardsHeight', `${avail}px`);
+      }
+
+      const resched = () => { clearTimeout(sizeCards._t); sizeCards._t = setTimeout(()=>{ setVH(); sizeCards(); }, 120); };
+
+      window.addEventListener('load', ()=>{ setVH(); sizeCards(); });
+      window.addEventListener('resize', resched);
+      window.addEventListener('orientationchange', resched);
+      if (window.visualViewport){
+        window.visualViewport.addEventListener('resize', resched);
+        window.visualViewport.addEventListener('scroll', resched);
+      }
+      document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible') resched(); });
+    })();
   </script>
 </body>
 </html>

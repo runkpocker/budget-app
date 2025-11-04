@@ -16,23 +16,26 @@ function getWebAppUrl(view) {
 }
 
 
-// Serve landing or index based on ?view=...
 function doGet(e) {
   try {
     var view = (e && e.parameter && e.parameter.view) || 'landing';
     var file = (view === 'index') ? 'index' : 'landing';
 
-    return HtmlService.createTemplateFromFile(file)
+    // 👇 Inject the canonical deployment URL (script.google.com/macros/.../dev or /exec)
+    var t = HtmlService.createTemplateFromFile(file);
+    t.BASE_URL = ScriptApp.getService().getUrl();
+
+    return t
       .evaluate()
       .setTitle('Bunny Balut Budget')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (err) {
-    var msg =
-      '<pre style="color:#ff8080;background:#1b1b1b;padding:12px;border-radius:8px;">' +
-      'Renderer failed\n' + String(err) + '</pre>';
+    var msg = '<pre style="color:#ff8080;background:#1b1b1b;padding:12px;border-radius:8px;">'
+            + 'Renderer failed\n' + String(err) + '</pre>';
     return HtmlService.createHtmlOutput(msg).setTitle('Bunny Balut Budget');
   }
 }
+
 
 // HTML include helper
 function include(name) {
