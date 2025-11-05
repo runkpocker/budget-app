@@ -1,11 +1,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <?!= include('styles'); ?>
+
+<style>
+
+#txViewToggle {
+  display: none !important;
+}
+
+
+</style>
 <div class="container">
   <header class="app-header">
     <h1>🐰 Bunny Balut Budget</h1>
     <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
   </header>
+
+  <!-- Mobile jump chip -->
+  <div class="mobile-jump hidden" id="jumpExplorer">
+    <a href="#explorerCard" class="chip-link">Jump to Explorer ↓</a>
+  </div>
+
+  <!-- Month picker bar -->
+<div class="card" id="monthBar">
+  <div class="row">
+    <strong>Pick a month, Bunny!</strong>
+    <input type="month" id="isoMonth" />
+    <button id="btnApplyMonth" class="action">Set Month</button>
+    <label class="inline" style="margin-left:8px;">
+      <input type="checkbox" id="includeTx" checked /> Include Transactions
+    </label>
+    <span id="monthStatus" class="status"></span>
+  </div>
+</div>
+
 
   <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
     <div class="modal-panel">
@@ -16,31 +44,35 @@
 
   <section class="cards">
     <div class="card">
-      <h2>🧮 Summary</h2>
-      <div class="row">
-        <label for="isoMonth">Month</label>
-        <input type="month" id="isoMonth" />
-        <button id="btnApplyMonth" class="action">Set Month</button>
-        <label class="inline" style="margin-left:8px;">
-          <input type="checkbox" id="includeTx" checked /> Include Transactions
-        </label>
-        <span id="monthStatus" class="status"></span>
-      </div>
+      <!-- Summary now collapsible -->
+      <details id="sum-section" class="panel" open>
+        <summary class="table-title">Summary</summary>
 
-      <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
-        <div class="summary-col">
-          <h3>Actual vs Budget</h3>
-          <div class="table-wrap"><table id="tblActVsBud"></table></div>
+<!--         <div class="row">
+          <label for="isoMonth">Month</label>
+          <input type="month" id="isoMonth" />
+          <button id="btnApplyMonth" class="action">Set Month</button>
+          <label class="inline" style="margin-left:8px;">
+            <input type="checkbox" id="includeTx" checked /> Include Transactions
+          </label>
+          <span id="monthStatus" class="status"></span>
         </div>
-        <div class="summary-col">
-          <h3>Income</h3>
-          <div class="table-wrap"><table id="tblIncome"></table></div>
+ -->
+        <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
+          <div class="summary-col">
+            <h3>Actual vs Budget</h3>
+            <div class="table-wrap"><table id="tblActVsBud"></table></div>
+          </div>
+          <div class="summary-col">
+            <h3>Income</h3>
+            <div class="table-wrap"><table id="tblIncome"></table></div>
+          </div>
+          <div class="summary-col">
+            <h3>Expense</h3>
+            <div class="table-wrap"><table id="tblExpense"></table></div>
+          </div>
         </div>
-        <div class="summary-col">
-          <h3>Expense</h3>
-          <div class="table-wrap"><table id="tblExpense"></table></div>
-        </div>
-      </div>
+      </details>
     </div>
   </section>
 
@@ -49,7 +81,7 @@
 
     <div class="row"><span id="dxMonthBadge" class="chip">Month Set: not set</span></div>
 
-    <!-- Segmented tabs for phones -->
+    <!-- Segmented tabs (non-sticky) -->
     <div class="seg seg-top" id="dxSeg">
       <button class="seg-btn active" data-panel="bud">Budget</button>
       <button class="seg-btn" data-panel="tx">Transactions</button>
@@ -58,7 +90,6 @@
     </div>
 
     <h3>Data Filters</h3>
-    <!-- Inline filters (desktop + tablet). This is also the sticky footer row inside the card on phones -->
     <div class="filter-row compact original" id="dxFiltersOriginal">
       <label for="dxType">Type</label>
       <select id="dxType"></select>
@@ -70,48 +101,28 @@
       <button id="dxRefresh" class="action">Refresh Transactions</button>
     </div>
 
-    <h3 class="table-title" style="margin-top:16px">➕ Quick Add</h3>
-<form id="qaForm" class="filter-row compact" autocomplete="off">
-  <label for="qaDate">Date</label>
-  <input id="qaDate" type="date" required>
+    <!-- Collapsible sections -->
+    <details class="panel" id="bud-section" open>
+      <summary class="table-title">Budget</summary>
+      <div id="panel-bud">
+        <div class="table-wrap"><table id="dxBudgets"></table></div>
+      </div>
+    </details>
 
-  <label for="qaType">Type</label>
-  <select id="qaType" required></select>
-
-  <label for="qaCat">Category</label>
-  <select id="qaCat" required></select>
-
-  <label for="qaAmt">Amount</label>
-  <input id="qaAmt" type="number" step="0.01" inputmode="decimal" required>
-
-  <label for="qaAcct">Account</label>
-  <select id="qaAcct" required></select>
-
-  <label for="qaDesc">Desc</label>
-  <input id="qaDesc" type="text" placeholder="Optional">
-
-  <span class="flex-spacer"></span>
-  <button id="qaSubmit" class="action">Add</button>
-</form>
-
-
-    <h3 class="table-title">Budget</h3>
-    <div id="panel-bud">
-      <div class="table-wrap"><table id="dxBudgets"></table></div>
-    </div>
-
-    <h3 class="table-title" style="margin-top:16px">Transactions</h3>
-    <div id="panel-tx">
-      <div class="table-wrap"><table id="dxTx"></table></div>
-      <!-- Cards container for mobile (built from the table DOM) -->
-      <div id="dxTxCards" class="tx-cards hidden"></div>
-    </div>
+    <details class="panel" id="tx-section" open>
+      <summary class="table-title" style="margin-top:16px">Transactions</summary>
+      <div id="panel-tx">
+        <div class="table-wrap"><table id="dxTx"></table></div>
+        <div id="dxTxCards" class="tx-cards hidden"></div>
+      </div>
+    </details>
   </div>
 
   <?!= include('client'); ?>
 </div>
 
-<!-- Sticky Explorer helper -->
+<!-- Sticky Explorer helper — disabled -->
+<!--
 <script>
 (function(){
   var refresh = document.getElementById('dxRefresh');
@@ -121,15 +132,18 @@
   card.classList.add('sticky-explorer');
 })();
 </script>
+-->
 
-<!-- Size Explorer card to fill remaining viewport -->
+<!-- Desktop: Explorer fills viewport; mobile: page scroll only -->
 <script>
 (function(){
   var card = document.getElementById('explorerCard');
   if (!card) return;
   function sizeExplorer(){
+    var isDesktop = window.innerWidth >= 980;
+    if (!isDesktop){ card.style.height = ''; card.style.overflow = ''; return; }
     var top = card.getBoundingClientRect().top;
-    var h = Math.max(window.innerHeight - top, 360);
+    var h   = Math.max(window.innerHeight - top, 360);
     card.style.height = h + 'px';
     card.style.overflow = 'auto';
   }
@@ -141,7 +155,7 @@
 })();
 </script>
 
-<!-- Tabs + Cards view for Transactions (no backend changes) -->
+<!-- Tabs + Cards view for Transactions -->
 <script>
 (function(){
   var seg = document.getElementById('dxSeg');
@@ -151,7 +165,6 @@
   var txTable  = document.getElementById('dxTx');
   var txCards  = document.getElementById('dxTxCards');
 
-  // Tabs
   if (seg && panelBud && panelTx){
     seg.addEventListener('click', function(e){
       var b = e.target.closest('.seg-btn[data-panel]');
@@ -163,7 +176,6 @@
     });
   }
 
-  // Build cards from #dxTx table
   function buildCardsFromTable(){
     if (!txTable || !txCards) return;
     var thead = txTable.tHead;
@@ -199,7 +211,6 @@
     });
   }
 
-  // Toggle Cards/Table
   if (toggle && panelTx){
     toggle.addEventListener('click', function(){
       var on = toggle.getAttribute('aria-pressed') === 'true' ? false : true;
@@ -216,7 +227,6 @@
     });
   }
 
-  // Rebuild cards after month set / refresh complete
   document.addEventListener('summary-month-set', function(){
     if (toggle && toggle.getAttribute('aria-pressed') === 'true'){
       setTimeout(buildCardsFromTable, 250);
@@ -230,7 +240,7 @@
 })();
 </script>
 
-<!-- Shimmer toggler (non-destructive) -->
+<!-- Shimmer toggler -->
 <script>
 (function(){
   if (!window.showBusy || !window.hideBusy) return;
@@ -276,7 +286,7 @@
 })();
 </script>
 
-<!-- Set Month handler (unchanged core) -->
+<!-- Set Month handler -->
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -311,7 +321,12 @@
         btn.classList.remove('busy');
 
         if (status) status.textContent = `✓ Set to ${res.b4}`;
+            
+      // NEW: auto-expand Summary panel
+        const sum = document.getElementById('sum-section');
+        if (sum) sum.open = true;
 
+        
         if (typeof renderTable === 'function') {
           renderTable('tblActVsBud', res.actVsBud);
           renderTable('tblIncome',   res.income);
@@ -329,7 +344,7 @@
         btn.textContent = prev;
         btn.classList.remove('busy');
 
-        hideBusy(); // only on failure here
+        hideBusy();
 
         const msg = (err && err.message) ? err.message : 'Unknown error';
         if (status) status.textContent = 'Error: ' + msg;
@@ -348,4 +363,125 @@
       if (amt) { try { amt.focus(); } catch(_){} }
     }
   });
+</script>
+
+<!-- Sticky offset measurer -->
+<script>
+(function(){
+  function setStickyOffsets(){
+    var root    = document.documentElement;
+    var header  = document.querySelector('.app-header');
+    var seg     = document.getElementById('dxSeg');
+    var filters = document.getElementById('dxFiltersOriginal');
+
+    var headerH = header  ? header.getBoundingClientRect().height  : 0;
+    var segH    = seg     ? seg.getBoundingClientRect().height     : 0;
+    var filtH   = filters ? filters.getBoundingClientRect().height  : 0;
+
+    root.style.setProperty('--stickytop', Math.round(headerH) + 'px');
+    root.style.setProperty('--seg-h',     Math.round(segH)    + 'px');
+    root.style.setProperty('--filters-h', Math.round(filtH)   + 'px');
+  }
+
+  setStickyOffsets();
+  window.addEventListener('resize', setStickyOffsets);
+  window.addEventListener('orientationchange', setStickyOffsets);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(setStickyOffsets).catch(()=>{});
+  }
+})();
+</script>
+
+<!-- Desktop inner-scroll; Mobile page-scroll -->
+<script>
+(function(){
+  function isMobile(){
+    return window.matchMedia('(max-width: 640px), (hover: none) and (pointer: coarse)').matches;
+  }
+  function sizeSectionWrap(panelId){
+    var panel = document.getElementById(panelId);
+    if (!panel) return;
+    var wrap = panel.querySelector('.table-wrap');
+    if (!wrap) return;
+
+    if (isMobile()){
+      wrap.style.maxHeight = '';
+      wrap.style.overflow  = '';
+      wrap.style.webkitOverflowScrolling = '';
+      return;
+    }
+
+    var rect = wrap.getBoundingClientRect();
+    var avail = window.innerHeight - rect.top - 12;
+    var h = Math.max(240, Math.floor(avail));
+    wrap.style.maxHeight = h + 'px';
+    wrap.style.overflow  = 'auto';
+    wrap.style.webkitOverflowScrolling = 'touch';
+  }
+  function sizeAll(){
+    sizeSectionWrap('panel-bud');
+    sizeSectionWrap('panel-tx');
+  }
+  sizeAll();
+  window.addEventListener('resize', sizeAll, {passive:true});
+  window.addEventListener('orientationchange', sizeAll, {passive:true});
+  document.addEventListener('DOMContentLoaded', sizeAll);
+  window.addEventListener('load', sizeAll);
+  document.addEventListener('summary-month-set', sizeAll);
+  document.addEventListener('dx-refresh-complete', sizeAll);
+})();
+</script>
+
+<!-- Ensure THEAD exists for sticky headers -->
+<script>
+(function(){
+  function ensureStickyThead(tableId){
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    if (table.tHead && table.tHead.rows && table.tHead.rows.length) return;
+
+    var tbody = table.tBodies && table.tBodies[0];
+    var firstRow = (table.tHead && table.tHead.rows[0]) || (tbody && tbody.rows[0]) || table.rows[0];
+    if (!firstRow) return;
+
+    var thead = table.tHead || table.createTHead();
+    var newHeadRow = thead.insertRow(0);
+    Array.from(firstRow.cells).forEach(function(cell){
+      var th = document.createElement('th');
+      th.innerHTML = cell.innerHTML;
+      th.className = cell.className;
+      th.style.cssText = cell.style.cssText || '';
+      newHeadRow.appendChild(th);
+    });
+    if (firstRow.parentElement === tbody || firstRow.parentElement === table) {
+      firstRow.parentElement.removeChild(firstRow);
+    }
+  }
+  function normalizeAll(){
+    ensureStickyThead('dxBudgets');
+    ensureStickyThead('dxTx');
+  }
+  document.addEventListener('DOMContentLoaded', normalizeAll);
+  window.addEventListener('load', normalizeAll);
+  document.addEventListener('summary-month-set', function(){ setTimeout(normalizeAll, 0); });
+  document.addEventListener('dx-refresh-complete', function(){ setTimeout(normalizeAll, 0); });
+
+  // Collapse Summary on phones by default + show jump chip
+  const sum = document.getElementById('sum-section');
+  const jump = document.getElementById('jumpExplorer');
+  function isPhone(){ return window.matchMedia('(max-width: 640px), (hover:none) and (pointer:coarse)').matches; }
+  function applyMobileSummary(){
+    if (!sum || !jump) return;
+    if (isPhone()){
+      sum.removeAttribute('open');
+      jump.classList.remove('hidden');
+    }else{
+      sum.setAttribute('open', '');
+      jump.classList.add('hidden');
+    }
+  }
+  applyMobileSummary();
+  window.addEventListener('resize', applyMobileSummary, {passive:true});
+  window.addEventListener('orientationchange', applyMobileSummary, {passive:true});
+})();
 </script>

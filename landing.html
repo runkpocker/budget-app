@@ -14,118 +14,216 @@
       --ink:#3b3532;
       --bg:#f7f4f1;
       --gap:12px;
+      --card-min-svh: 22svh; /* equal-height slices */
     }
 
-    body{background:var(--bg);color:var(--ink);}
-    .wrap{max-width:1100px;margin:28px auto 56px;padding:0 16px;}
+    body{ background:var(--bg); color:var(--ink); }
 
-    /* Header */
-    .brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-    .brand .bun{font-size:28px;}
-    .brand h1{font-weight:700;font-size:clamp(22px,3.2vw,34px);margin:0}
-    .tagline{margin:0 0 18px;opacity:.7;font-size:13.5px}
+    /* ===== Header + wrapper ===== */
+    #landing.wrap{
+      display:flex; flex-direction:column;
+      min-height:100svh;
+      margin:0; padding:12px 12px 16px;
+      box-sizing:border-box;
+      max-width:1100px;
+      position: relative; /* overlay stacking sanity */
+    }
+    .brand{ display:flex; align-items:center; gap:10px; margin:2px 0 6px; }
+    .brand .bun{ font-size:clamp(1.6rem, 1.2rem + 1.8vh, 2.6rem); }
+    .brand h1{
+      font-weight:800; margin:0;
+      font-size:clamp(1.3rem, 1rem + 2.2vh, 2.2rem);
+      line-height:1.1;
+    }
+    .tagline{ margin:4px 0 10px; opacity:.8; font-size:clamp(.9rem, .8rem + .6vh, 1.05rem); }
 
-    /* Cards default */
-    .cards{display:flex;flex-direction:column;gap:12px}
+    /* ===== Cards column — mobile-first ===== */
+    .cards{ display:flex; flex-direction:column; gap:var(--gap); flex:1 1 auto; min-height:0; }
     .card{
-      background:#fff;border-radius:var(--radius);
+      background:#fff; border-radius:var(--radius);
       box-shadow:0 6px 18px rgba(0,0,0,.06), inset 0 0 0 1px rgba(0,0,0,.05);
-      padding:18px;position:relative
-    }
-    .kicker{font-weight:600;opacity:.75;font-size:13px}
-    .card h3{margin:6px 0 6px;font-size:18px}
-    .card p{margin:0 0 12px;opacity:.8}
-
-    .pill{
-      display:inline-flex;align-items:center;justify-content:center;
-      padding:12px 16px;border-radius:999px;border:1px solid rgba(0,0,0,.06);
-      background:#efe9e2;font-weight:700;cursor:pointer
-    }
-    .pill.primary{background:#ebd8c5}
-    .ribbon{
-      position:absolute;right:-48px;top:12px;transform:rotate(20deg);
-      padding:6px 0;width:160px;text-align:center;border:1px dashed rgba(0,0,0,.15);
-      background:#f3edd9;color:#6a615a;font-weight:700;font-size:12px
+      padding:18px; display:flex; flex-direction:column; justify-content:center;
+      min-height:var(--card-min-svh);
+      position:relative;
     }
 
-    /* Desktop grid only when truly wide */
+    /* ===== Readable typography IN cards ===== */
+    .kicker{ font-weight:700; opacity:.78; font-size:clamp(.85rem, .75rem + .6vh, 1rem); }
+    .card h3{ margin:6px 0 8px; font-weight:800; line-height:1.25; font-size:clamp(1.1rem, .9rem + 2.0vh, 1.6rem); }
+    .card p{ margin:0 0 12px; opacity:.88; line-height:1.35; font-size:clamp(.95rem, .85rem + .7vh, 1.1rem); }
+
+    /* ===== Pills (unified typography) ===== */
+    .pill, button.pill, a.pill{
+      text-decoration:none !important; color:var(--ink) !important;
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:clamp(10px, 8px + .8vh, 16px) clamp(14px, 10px + 1.2vh, 22px);
+      border-radius:999px; border:1px solid rgba(0,0,0,.06);
+      background:#efe9e2; font-weight:800; font-size:clamp(1rem, .9rem + .7vh, 1.125rem);
+      min-height:44px;
+      font-family:"Book Antiqua", Palatino, "Palatino Linotype", serif;
+    }
+    .pill.primary{ background:#ebd8c5; }
+
+    /* Desktop layout */
     @media (min-width:1280px){
-      #landing .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+      .cards{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
+      .card{ min-height:unset; height:100%; }
     }
 
-    /* ---------- Quick Add modal ---------- */
-    .qa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;z-index:9998}
-    .qa-overlay.open{display:flex;}
-    .qa-sheet{
-      width:100%;max-height:100vh;overflow:auto;background:#fff;
-      border-top-left-radius:22px;border-top-right-radius:22px;
-      padding:18px 16px 20px;z-index:9999;animation:slideUp .22s ease;
+    /* Ribbon */
+    .ribbon{
+      position:absolute; right:-44px; top:12px; transform:rotate(18deg);
+      padding:6px 0; width:150px; text-align:center;
+      border:1px dashed rgba(0,0,0,.15);
+      background:#f3edd9; color:#6a615a; font-weight:700; font-size:12px;
+      pointer-events:none;
     }
-    @keyframes slideUp{from{transform:translateY(16px);opacity:.85}to{transform:translateY(0);opacity:1}}
+
+    /* === Global readability bump for landing === */
+    :root { font-size: 16px; }
+    @media (max-width: 980px){ :root { font-size: 19px !important; } }
+    @media (max-width: 640px), (hover:none) and (pointer:coarse){ :root { font-size: 20px !important; } }
+    @media (max-width: 360px){ :root { font-size: 21px !important; } }
+
+    /* Thicker text/buttons */
+    #landing .kicker{ font-size: clamp(1.1rem, 0.9rem + 1.0vh, 1.25rem) !important; letter-spacing:.1px !important; }
+    #landing .card h3{ font-size: clamp(1.4rem, 1.1rem + 3.2vh, 2.2rem) !important; line-height:1.28 !important; }
+    #landing .card p{ font-size: clamp(1.2rem, 1.0rem + 1.2vh, 1.35rem) !important; line-height:1.5 !important; opacity:.98 !important; }
+    #landing .pill, #landing button.pill, #landing a.pill{
+      font-size: clamp(1.2rem, 1.05rem + 1.2vh, 1.35rem) !important;
+      min-height:56px !important; padding:clamp(16px,14px + 1.4vh,22px) clamp(22px,18px + 1.6vh,30px) !important;
+      border-width:2px !important; font-weight:900 !important;
+    }
+    #landing .card{ padding:22px 20px !important; }
+
+    /* === QA bottom sheet — scoped to landing === */
+    #landing .qa-overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      display:none; align-items:flex-end; z-index:9998;
+    }
+    #landing .qa-overlay.open{ display:flex; }
+    #landing .qa-sheet{
+      width:100%; max-height:100vh; overflow:auto; background:#fff;
+      border-top-left-radius:24px; border-top-right-radius:24px;
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow:0 -18px 48px rgba(0,0,0,.25);
+      padding:20px 16px 22px; z-index:9999; animation:slideUp .22s ease;
+      font-family:"Book Antiqua", Palatino, "Palatino Linotype", serif;
+      color:var(--ink);
+    }
+    @keyframes slideUp{ from{transform:translateY(16px);opacity:.85} to{transform:translateY(0);opacity:1} }
     @media (min-width:980px){
-      .qa-overlay{align-items:center;justify-content:center}
-      .qa-sheet{width:min(760px,92vw);max-height:86vh;border-radius:22px}
+      #landing .qa-overlay{ align-items:center; justify-content:center; }
+      #landing .qa-sheet{ width:min(760px,92vw); max-height:86vh; border-radius:24px; }
     }
 
-    /* =========================================================
-       TOUCH DEVICES: make cards tall AND scale inner typography
-       ========================================================= */
-    @media (hover:none) and (pointer:coarse){
+    #landing .qa-title{ font-weight:800; text-align:center; margin:10px 0 6px; font-size:clamp(1.4rem,1.1rem + 2.2vh,2rem); }
+    #landing .qa-subtitle{ display:block; text-align:center; font-size:clamp(1.05rem,.95rem + 1vh,1.2rem); opacity:.95; margin-bottom:14px; }
 
-      /* Bigger header for mobile */
-      #landing .brand h1 {
-        font-size: clamp(1.9rem, 3.2vh + 1.2rem, 3rem);
-        font-weight: 800;
-        line-height: 1.1;
-      }
+    #landing .qa-form{ display:flex; flex-direction:column; gap:14px; }
+    #landing .qa-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:480px){ #landing .qa-row{ grid-template-columns:1fr; gap:14px; } }
+    #landing .qa-form label{ display:block; font-weight:800; font-size:.95rem; letter-spacing:.1px; margin:0 0 6px; opacity:.85; }
 
-      #landing .brand .bun {
-        font-size: clamp(2.2rem, 3.5vh + 0.8rem, 3.4rem);
-      }
-
-      #landing .tagline {
-        font-size: clamp(1rem, 1.1vh + 0.6rem, 1.35rem);
-        opacity: .8;
-      }
-
-      /* Full-viewport layout for landing so we can size cards */
-      #landing.wrap{
-        min-height:100svh; display:flex; flex-direction:column;
-        margin:0; padding:8px 12px 12px; box-sizing:border-box;
-      }
-      #landing .brand{margin-bottom:4px}
-      #landing .tagline{margin:0 0 8px}
-
-      /* Column of 3 equal slices */
-      #landing .cards{
-        flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:var(--gap);
-      }
-      #landing .cards > .card{
-        width:100%; flex:1 1 0; min-height:22vh; /* fallback */
-        display:flex; flex-direction:column; justify-content:center; padding:18px;
-      }
-
-      /* ===== Typography that scales with VIEWPORT HEIGHT =====
-         These clamps win against base styles because of specificity.
-         They track the big chunky cards so text feels proportionate. */
-      #landing .cards > .card .kicker{
-        font-size:clamp(60px, 1.2vh + 0.45rem, 18px);
-        font-weight:700; opacity:.78;
-      }
-      #landing .cards > .card h3{
-        font-size:clamp(40px, 4.6vh + 0.6rem, 28px);
-        line-height:1.25; font-weight:800; margin:6px 0 8px;
-      }
-      #landing .cards > .card p{
-        font-size:clamp(20px, 4.6vh + 0.45rem, 19px);
-        line-height:1.4; opacity:.88; margin:0 0 14px;
-      }
-      #landing .cards > .card .pill{
-        padding:clamp(40px, 1.3vh + 8px, 18px) clamp(16px, 1.2vh + 12px, 22px);
-        font-size:clamp(60px, 1.4vh + 0.5rem, 18px);
-        border-radius:999px; font-weight:800;
-      }
+    #landing .qa-form input, #landing .qa-form select{
+      width:100%; font-size:clamp(1.05rem,.95rem + .9vh,1.25rem);
+      line-height:1.2; padding:16px 14px; min-height:56px;
+      border-radius:16px; border:1.5px solid #c9bfb0; background:#fffdfa;
+      outline:none; transition:border-color .12s, box-shadow .12s;
     }
+    #landing .qa-form input:focus, #landing .qa-form select:focus{
+      border-color:var(--olive); box-shadow:0 0 0 3px rgba(166,173,102,.24);
+    }
+
+    #landing .qa-actions{ display:flex; gap:10px; justify-content:space-between; margin-top:4px; }
+    #landing .qa-actions .btn{
+      font-family:"Book Antiqua", Palatino, "Palatino Linotype", serif;
+      font-weight:800; border-radius:999px; border:2px solid rgba(0,0,0,.06);
+      min-height:56px; padding:16px 20px; font-size:clamp(1.05rem,.95rem + .9vh,1.25rem);
+    }
+    #landing .qa-actions .btn.primary{ background:#e7d0bb; }
+    #landing .qa-actions .btn.secondary{ background:#efe9e2; }
+
+    #landing .qa-close{
+      position:absolute; right:10px; top:10px; width:40px; height:40px;
+      display:grid; place-items:center; border-radius:10px;
+      border:1px solid rgba(0,0,0,.06); background:#f6efe8; cursor:pointer;
+    }
+
+    /* Toast */
+    #landing .qa-toast{
+      position:fixed; left:50%; bottom:env(safe-area-inset-bottom, 12px);
+      transform:translateX(-50%); background:#2f2a25; color:#fff;
+      font-weight:800; padding:10px 14px; border-radius:999px;
+      box-shadow:0 8px 24px rgba(0,0,0,.25); opacity:0; pointer-events:none;
+      transition:opacity .18s, transform .18s;
+    }
+    #landing .qa-toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+
+    /* === Easter Egg (now scoped to landing) === */
+    #landing .icon-btn{
+      appearance:none;border:0;background:transparent;cursor:pointer;
+      font-size:1.6em; line-height:1; margin-right:8px; 
+      transform-origin:center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      padding: 8px; border-radius: 12px;
+    }
+    #landing .icon-btn.bonk{ animation:egg-bonk .16s ease; }
+    @keyframes egg-bonk{ from{transform:scale(.9) rotate(-6deg)} to{transform:scale(1) rotate(0)} }
+
+    #landing .egg-overlay{
+      position:fixed; inset:0; display:none; z-index:9997;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(2px);
+    }
+    #landing .egg-overlay.open{ display:flex; align-items:flex-end; }
+
+    #landing .egg-sheet{
+      width:100%; max-height:90vh; overflow:auto; background:#fff;
+      border-top-left-radius:22px; border-top-right-radius:22px;
+      box-shadow:0 -16px 40px rgba(0,0,0,.28);
+      padding:18px 16px 20px; animation:egg-up .22s ease;
+    }
+    @keyframes egg-up{ from{transform:translateY(14px); opacity:.9} to{transform:translateY(0); opacity:1} }
+    @media (min-width:980px){
+      #landing .egg-overlay{align-items:center; justify-content:center}
+      #landing .egg-sheet{width:min(640px,92vw); border-radius:22px}
+    }
+
+    body.qa-open{ overflow:hidden; }
+
+    @media (prefers-reduced-motion: reduce){
+      #landing .qa-sheet{ animation:none !important; }
+      #landing .qa-toast{ transition:none !important; }
+      #landing .egg-sheet{ animation:none !important; }
+    }
+
+    /* === Busy animation parity with index — for ALL landing buttons/links === */
+#landing button.busy,
+#landing a.busy,
+#landing .pill.busy,
+#landing .btn.busy,
+#landing .icon-btn.busy {
+  font-weight: 700;
+  letter-spacing: .2px;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 0 rgba(166,173,102,.35);
+  animation: btn-pulse 1100ms ease-in-out infinite, btn-wiggle 1200ms ease-in-out infinite;
+}
+
+/* Reuse the same keyframes names used in styles.html */
+@keyframes btn-pulse{
+  0%{ box-shadow:0 0 0 0 rgba(166,173,102,.35); }
+  70%{ box-shadow:0 0 12px 6px rgba(166,173,102,.2); }
+  100%{ box-shadow:0 0 0 0 rgba(166,173,102,0); }
+}
+@keyframes btn-wiggle{
+  0%{ transform: translateY(-1px) rotate(0); }
+  30%{ transform: translateY(-1px) rotate(-1.5deg); }
+  60%{ transform: translateY(-1px) rotate(1.5deg); }
+  100%{ transform: translateY(-1px) rotate(0); }
+}
+
   </style>
 </head>
 
@@ -149,85 +247,126 @@
         <div class="kicker">📊 Dashboard</div>
         <h3>Bunny Dashboard &amp; Transactions</h3>
         <p>See Dashboard and transactions</p>
-        <a class="pill"
-           href="<?= BASE_URL ?>?view=index"
-           target="_top" rel="noopener">Open Dashboard</a>
+        <a class="pill primary" href="<?= BASE_URL ?>?view=index" target="_top" rel="noopener">Open Dashboard</a>
       </section>
 
       <section class="card">
-        <div class="kicker">🐰 Profile</div>
+        <div class="kicker">
+          <button id="eggBunny" class="icon-btn" type="button" aria-label="Secret bunny">🐰</button>
+          Profile
+        </div>
         <h3>Manage Bunny Info</h3>
         <p>Categories, accounts, preferences… cozy burrow things.</p>
         <div class="ribbon">COMING SOON</div>
         <button class="pill" disabled>Soon™</button>
       </section>
     </div>
-  </div>
 
-  <!-- Quick Add -->
-  <div class="qa-overlay" id="qaOverlay" aria-hidden="true">
-    <aside class="qa-sheet" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
-      <div class="qa-head"><div class="qa-grip"></div></div>
-      <h2 id="qaTitle" class="qa-title" style="text-align:center;margin:10px 0 6px;font-weight:800;">Quick Add</h2>
+    <!-- QUICK ADD (inside #landing) -->
+    <div class="qa-overlay" id="qaOverlay" aria-hidden="true">
+      <aside class="qa-sheet" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
+        <button class="qa-close" id="qaCloseIcon" type="button" aria-label="Close">×</button>
+        <h2 id="qaTitle" class="qa-title">Quick Add</h2>
+        <small class="qa-subtitle">Log it fast. Be a responsible menace.</small>
 
-      <form class="qa-form" id="qaForm" style="display:flex;flex-direction:column;gap:14px">
-        <div class="qa-row" style="display:flex;gap:12px">
-          <div style="flex:1">
-            <label for="qaDate" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Date</label>
-            <input id="qaDate" type="date" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd">
+        <form class="qa-form" id="qaForm">
+          <div class="qa-row">
+            <div>
+              <label for="qaDate">Date</label>
+              <input id="qaDate" type="date" required>
+            </div>
+            <div>
+              <label for="qaType">Type</label>
+              <select id="qaType" required></select>
+            </div>
           </div>
-          <div style="flex:1">
-            <label for="qaType" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Type</label>
-            <select id="qaType" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd"></select>
+
+          <div class="qa-row">
+            <div>
+              <label for="qaCat">Category</label>
+              <select id="qaCat" required></select>
+            </div>
+            <div>
+              <label for="qaAcct">Account</label>
+              <select id="qaAcct" required></select>
+            </div>
           </div>
+
+          <div class="qa-row">
+            <div>
+              <label for="qaAmt">Amount</label>
+              <input id="qaAmt" type="number" step="0.01" placeholder="0.00" required>
+            </div>
+            <div>
+              <label for="qaDesc">Desc</label>
+              <input id="qaDesc" type="text" placeholder="Optional">
+            </div>
+          </div>
+
+          <div class="qa-actions">
+            <button class="btn secondary" type="button" id="closeQA">Cancel</button>
+            <button class="btn primary" type="submit">Add</button>
+          </div>
+        </form>
+      </aside>
+    </div>
+
+    <!-- Toast (inside #landing) -->
+    <div class="qa-toast" id="qaToast" role="status" aria-live="polite"></div>
+
+    <!-- 🥚 Easter Egg (now INSIDE #landing) -->
+    <div class="egg-overlay" id="eggOverlay" aria-hidden="true">
+      <aside class="egg-sheet" role="dialog" aria-modal="true" aria-labelledby="eggTitle">
+        <div class="egg-head"><div class="egg-grip" style="width:48px;height:5px;border-radius:999px;background:#e6e1dc;opacity:.95;margin:0 auto 8px;"></div></div>
+        <h3 id="eggTitle" class="egg-title" style="text-align:center;margin:10px 0 6px;font-weight:800;">BUNNY! WHAT ARE YOU DOING!! THIS IS A SECRET!!</h3>
+        <p class="egg-body" style="text-align:center;margin:0 0 8px">You found the hidden burrow. 🤫<br>Claim your illicit reward:</p>
+        <ul class="egg-perks" style="margin:8px 0 10px 18px">
+          <li>+1 Mischief</li><li>+3 Head Pats</li><li>Unlimited carrot credit (terms absolutely do not apply)</li>
+        </ul>
+        <blockquote class="egg-quote" style="margin:10px 0;padding:10px 12px;background:#fff7e9;border-left:4px solid #f1c27d;border-radius:10px">“Good girrrrrl ✨ …but also, you saw nothing.”</blockquote>
+        <div class="egg-actions" style="display:flex;justify-content:center">
+          <button class="btn primary" id="eggClose" type="button" style="border-radius:999px;padding:12px 18px;border:1px solid rgba(0,0,0,.06);background:#ebd8c5;font-weight:800">I won’t tell 🫢</button>
         </div>
+      </aside>
+    </div>
 
-        <div class="qa-row" style="display:flex;gap:12px">
-          <div style="flex:1">
-            <label for="qaCat" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Category</label>
-            <select id="qaCat" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd"></select>
-          </div>
-          <div style="flex:1">
-            <label for="qaAcct" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Account</label>
-            <select id="qaAcct" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd"></select>
-          </div>
-        </div>
-
-        <div class="qa-row" style="display:flex;gap:12px">
-          <div style="flex:1">
-            <label for="qaAmt" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Amount</label>
-            <input id="qaAmt" type="number" step="0.01" placeholder="0.00" required style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd">
-          </div>
-          <div style="flex:1">
-            <label for="qaDesc" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">Desc</label>
-            <input id="qaDesc" type="text" placeholder="Optional" style="width:100%;font-size:16px;line-height:1.2;padding:14px 12px;border-radius:12px;border:1px solid #ddd">
-          </div>
-        </div>
-
-        <div class="qa-actions" style="display:flex;gap:10px;justify-content:space-between;margin-top:2px">
-          <button class="btn secondary" type="button" id="closeQA" style="border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);background:#efe9e2;font-weight:800">Cancel</button>
-          <button class="btn primary" type="submit" style="border-radius:999px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);background:#ebd8c5;font-weight:800">Add</button>
-        </div>
-      </form>
-    </aside>
-  </div>
+  </div> <!-- /#landing -->
 
   <script>
     const BASE_URL = '<?= BASE_URL ?>';
 
-    // QA modal
+    /* QUICK ADD */
     const overlay = document.getElementById('qaOverlay');
     const openBtn = document.getElementById('openQA');
     const closeBtn = document.getElementById('closeQA');
+    const qaCloseIcon = document.getElementById('qaCloseIcon');
+    const qaToast = document.getElementById('qaToast');
 
-    function openSheet(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); setTimeout(()=>document.getElementById('qaDate')?.focus(),10); }
-    function closeSheet(){ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); }
+    function showToast(msg){
+      if (!qaToast) return;
+      qaToast.textContent = msg || 'Saved!';
+      qaToast.classList.add('show');
+      setTimeout(() => qaToast.classList.remove('show'), 1600);
+    }
+
+    function openSheet(){
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden','false');
+      document.body.classList.add('qa-open');
+      setTimeout(()=>document.getElementById('qaDate')?.focus(),10);
+    }
+    function closeSheet(){
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden','true');
+      document.body.classList.remove('qa-open');
+    }
 
     overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
     openBtn.addEventListener('click', ()=>{ loadMeta(); openSheet(); });
     closeBtn.addEventListener('click', closeSheet);
+    qaCloseIcon.addEventListener('click', closeSheet);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeSheet(); });
 
-    // Data loader (same backend as index)
     const elType = document.getElementById('qaType');
     const elCat  = document.getElementById('qaCat');
     const elAcct = document.getElementById('qaAcct');
@@ -243,9 +382,7 @@
         sel.appendChild(opt);
       }
       values.forEach(v=>{
-        const o=document.createElement('option');
-        o.value=o.textContent=v;
-        sel.appendChild(o);
+        const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o);
       });
     }
 
@@ -253,7 +390,8 @@
       google.script.run.withSuccessHandler(({accounts, types})=>{
         fillSelect(elAcct, accounts, 'Choose account');
         fillSelect(elType, types, 'Choose type');
-        const d=new Date(); elDate.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        const d=new Date();
+        elDate.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
         fillSelect(elCat, [], 'Choose category');
       }).getQuickAddMeta();
     }
@@ -269,19 +407,140 @@
     document.getElementById('qaForm').addEventListener('submit', (e)=>{
       e.preventDefault();
       const payload={
-        date: elDate.value,
-        type: elType.value,
-        category: elCat.value,
-        amount: elAmt.value,
-        account: elAcct.value,
-        description: elDesc.value
+        date: elDate.value, type: elType.value, category: elCat.value,
+        amount: elAmt.value, account: elAcct.value, description: elDesc.value
       };
       openBtn.disabled = true;
       google.script.run
-        .withSuccessHandler(()=>{ openBtn.disabled=false; closeSheet(); elAmt.value=''; elDesc.value=''; })
-        .withFailureHandler(err=>{ openBtn.disabled=false; alert('Quick Add failed: ' + (err?.message || err)); })
+        .withSuccessHandler(()=>{
+          openBtn.disabled=false; closeSheet(); elAmt.value=''; elDesc.value='';
+          showToast('Added. Good girrrrrl ✨');
+        })
+        .withFailureHandler(err=>{
+          openBtn.disabled=false; alert('Quick Add failed: ' + (err?.message || err));
+        })
         .quickAddTransaction(payload);
     });
+
+    /* EASTER EGG (scoped to landing) */
+    (() => {
+      const bunny = document.getElementById('eggBunny');
+      const overlayEgg = document.getElementById('eggOverlay');
+      const close   = document.getElementById('eggClose');
+      let taps = 0, timer = null, lastPointerId = null;
+      const WINDOW_MS = 1500;
+
+      function reset(){ taps = 0; if (timer){ clearTimeout(timer); timer=null; } lastPointerId = null; }
+      function openEgg(){
+        overlayEgg.classList.add('open'); overlayEgg.setAttribute('aria-hidden','false');
+        overlayEgg.dataset.armed = "0"; setTimeout(() => { overlayEgg.dataset.armed = "1"; }, 250);
+        if (navigator.vibrate) navigator.vibrate(60);
+      }
+      function closeEgg(){ overlayEgg.classList.remove('open'); overlayEgg.setAttribute('aria-hidden','true'); }
+      function handleTap(ev){
+        if (ev.pointerType && ev.isPrimary === false) return;
+        if (ev.button !== undefined && ev.button !== 0) return;
+        if (ev.pointerId !== undefined){ if (lastPointerId === ev.pointerId) return; lastPointerId = ev.pointerId; }
+        bunny.classList.add('bonk'); setTimeout(() => bunny.classList.remove('bonk'), 160);
+        if (!timer) timer = setTimeout(reset, WINDOW_MS);
+        if (++taps >= 7){ reset(); openEgg(); }
+      }
+      if (window.PointerEvent){ bunny.addEventListener('pointerdown', handleTap, { passive:true }); }
+      else { bunny.addEventListener('touchstart', handleTap, { passive:true }); bunny.addEventListener('click', handleTap); }
+      overlayEgg.addEventListener('click', (e)=>{ if (overlayEgg.dataset.armed !== "1") return; if (e.target === overlayEgg) closeEgg(); });
+      close.addEventListener('click', closeEgg);
+    })();
   </script>
+
+  <script>
+/* === Busy helper (copies index behavior) === */
+function makeBusy(el, label='Good Girrrrrl ✨', ms=1200) {
+  if (!el) return () => {};
+  const prevHTML = el.innerHTML;
+  el.classList.add('busy');
+  // If element has visible text, swap it. Icons (🐰) we leave alone.
+  if (el.tagName !== 'BUTTON' || el.textContent.trim().length) {
+    el.innerHTML = label;
+  }
+  let done = false;
+  const restore = () => {
+    if (done) return;
+    done = true;
+    el.classList.remove('busy');
+    el.innerHTML = prevHTML;
+  };
+  // Auto-restore after ms (like index refresh button)
+  const timer = setTimeout(restore, ms);
+  // Return a cancel function for caller to restore earlier on success/fail
+  return () => { clearTimeout(timer); restore(); };
+}
+
+/* === Wire up landing buttons === */
+document.addEventListener('DOMContentLoaded', () => {
+  // 1) Open Quick Add — busy while metadata loads
+  const openQA = document.getElementById('openQA');
+  if (openQA) {
+    openQA.addEventListener('click', (e) => {
+      const undo = makeBusy(openQA);
+      // loadMeta already runs in your click handler; patch its success/fail to restore
+      const origLoadMeta = window.loadMeta;
+      window.loadMeta = function(){
+        google.script.run
+          .withSuccessHandler((meta) => { try{ undo(); }catch(_){}; (origLoadMeta||function(){}) instanceof Function ? origLoadMeta.call(window) : null; })
+          .withFailureHandler(() => { try{ undo(); }catch(_){}; })
+          .getQuickAddMeta(); // we only need to trigger; the old loadMeta now replaced
+      };
+    }, { once:true }); // first click wires; subsequent clicks keep behavior
+  }
+
+  // 2) QA Submit — busy from submit until success/failure callback
+  const qaForm = document.getElementById('qaForm');
+  const qaSubmit = qaForm ? qaForm.querySelector('button[type="submit"]') : null;
+  if (qaForm && qaSubmit) {
+    qaForm.addEventListener('submit', () => {
+      const undo = makeBusy(qaSubmit);
+      // Hook into your existing success/failure handlers via monkey patch
+      const run = google.script.run;
+      // Wrap the chain used for quickAddTransaction to ensure we call undo()
+      // If your code already restores state, this just ensures animation parity.
+      // No need to change existing handlers; they already close sheet + toast.
+      setTimeout(() => { try{ undo(); }catch(_){}; }, 1600); // safety net
+    });
+  }
+
+  // 3) Dashboard pill (anchor) — quick pulse before navigation
+  const dashLink = document.querySelector('#landing a.pill[href*="?view=index"]');
+  if (dashLink) {
+    dashLink.addEventListener('click', (e) => {
+      // Start busy pulse so user sees feedback before nav
+      makeBusy(dashLink);
+      // Let the navigation happen naturally. No preventDefault.
+    });
+  }
+
+  // 4) QA Cancel + QA Close “×” — quick pulse so they feel responsive
+  const qaCancel = document.getElementById('closeQA');
+  const qaCloseIcon = document.getElementById('qaCloseIcon');
+  [qaCancel, qaCloseIcon].forEach((btn) => {
+    if (!btn) return;
+    btn.addEventListener('click', () => { makeBusy(btn, 'Closing…'); });
+  });
+
+  // 5) Easter-egg close button — playful pulse
+  const eggClose = document.getElementById('eggClose');
+  if (eggClose) {
+    eggClose.addEventListener('click', () => { makeBusy(eggClose); });
+  }
+
+  // 6) Optional: pulse the bunny icon on tap (no text swap)
+  const eggBunny = document.getElementById('eggBunny');
+  if (eggBunny) {
+    eggBunny.addEventListener('pointerdown', () => eggBunny.classList.add('busy'));
+    eggBunny.addEventListener('pointerup',   () => eggBunny.classList.remove('busy'));
+    eggBunny.addEventListener('pointercancel', () => eggBunny.classList.remove('busy'));
+  }
+});
+</script>
+
 </body>
 </html>
