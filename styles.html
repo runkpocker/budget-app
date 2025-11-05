@@ -1,3 +1,16 @@
+<!--
+  🐰 Bunny Styles Guardrails — MOBILE-SAFE RULES
+  ----------------------------------------------
+  - Do NOT remove or override phone breakpoints (<=640px, <=900px).
+  - Do NOT attach fixed widths/heights to dashboard summary or explorer.
+  - Tables must ALWAYS be wrapped in .table-wrap to prevent horizontal overflow.
+  - Buttons/inputs must remain >=44px tall on phones.
+  - Landing's pointer:coarse + clamp scaling is the canonical mobile pattern.
+  - Avoid absolute positioning inside card bodies unless layered and responsive.
+  - Respect prefers-reduced-motion; no forced animations.
+  - Any new layout must degrade gracefully on touch devices.
+-->
+
 <style>
 /* =========================
    Theme tokens
@@ -8,6 +21,11 @@
 
   --bg:#EDE9E3; --panel:#F7F4EE; --muted:#8A857A; --text:#3E3A33;
   --overlay:rgba(0,0,0,.20); --panel-border:#DDD4C6; --accent:var(--olive);
+
+  /* sticky offsets (JS updates these) */
+  --stickytop: 56px;
+  --seg-h: 40px;
+  --filters-h: 48px;
 }
 *{ box-sizing:border-box; }
 
@@ -53,7 +71,7 @@ body{
 .filter-row.compact select{ width:180px; max-width:220px; }
 .flex-spacer{ flex:1 1 auto; }
 
-/* Tabs (mobile segmented control) */
+/* Tabs */
 .seg{ display:flex; gap:8px; align-items:center; margin:8px 0 6px; }
 .seg-btn{
   border:1px solid var(--panel-border);
@@ -65,7 +83,7 @@ body{
 .seg-btn.active{ background:#e4decf; }
 .seg-btn.ghost{ background:transparent; }
 
-/* Table titles */
+/* Section titles */
 .table-title{ margin:12px 0 8px 0; font-size:16px; font-weight:700; letter-spacing:.2px;
   color:var(--text); background:#E4DECF; padding:6px 10px; border-radius:8px; }
 
@@ -151,7 +169,6 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
   #qaForm label { font-size: 12px; }
   #qaForm input, #qaForm select, #qaForm button { height: 48px; font-size: 16px; }
 
-
   /* Summary two-up */
   #summaryArea.summary-flex-final{
     display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;
@@ -189,41 +206,99 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
   }
   body.bb-busy .table-wrap{ min-height:56px; border-radius:8px; background:#efede7; }
 
-  /* Sticky Explorer (class-based) */
-  .sticky-explorer{
-    display:flex; flex-direction:column;
-    -webkit-overflow-scrolling:touch;
-  }
-  .sticky-explorer .table-wrap{
-    flex:1 1 auto;
-    overflow-y:visible;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  .sticky-explorer .filter-row.compact{
-    position:sticky; bottom:0; z-index:900; background:var(--panel);
-    padding-top:8px; padding-bottom:8px; border-top:1px solid var(--panel-border);
-    box-shadow:0 -6px 16px rgba(0,0,0,.06);
-  }
-  .sticky-explorer .table-wrap{ scroll-margin-bottom:64px; }
+  /* Tabs NOT sticky on phones */
+  .seg{ position: static; top: auto; }
 
-  /* Tabs refinements */
-  .seg{ position:sticky; top:0; z-index:5; background:var(--panel); padding-top:4px; }
   #panel-bud.hidden, #panel-tx.hidden{ display:none !important; }
-
-  /* Transaction cards */
-  .tx-cards{ display:grid; gap:8px; margin-top:8px; }
-  .tx-card{
-    background:var(--panel); border:1px solid var(--panel-border); border-radius:12px;
-    padding:10px 12px;
-    display:grid; grid-template-columns:1fr auto; grid-auto-rows:min-content; gap:4px 8px;
-  }
-  .tx-card .tx-main{ font-weight:700; }
-  .tx-card .tx-sub{ color:var(--muted); font-size:13px; grid-column:1 / -1; }
-  .tx-card .tx-amt{ font-weight:700; }
-  .tx-card.income .tx-amt{ color:#1a7f37; }
-  .tx-card.expense .tx-amt{ color:#9b2226; }
 }
 
 @keyframes shimmer{ 100%{ transform: translateX(100%); } }
+
+/* ===========================================================
+   BBB: TABLE-LOCAL STICKY v2 — section-local sticky (desktop)
+   =========================================================== */
+
+.seg{ position: static !important; top: auto !important; }
+.filter-row.compact.original{ position: static !important; top: auto !important; box-shadow:none !important; }
+
+.panel{ margin-top:12px; }
+.panel > summary.table-title{
+  display:flex; align-items:center; gap:8px; padding:6px 10px; background:#E4DECF; border-radius:8px;
+}
+.panel > summary.table-title::-webkit-details-marker{ display:none; }
+.panel[open] > summary.table-title{ border-bottom-left-radius:8px; border-bottom-right-radius:8px; }
+
+#panel-bud .table-wrap,
+#panel-tx  .table-wrap{
+  position: relative;
+  max-height: 60svh;              /* desktop fallback; JS sets exact */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#panel-bud .table-wrap table,
+#panel-tx  .table-wrap table{
+  border-collapse: separate !important;  /* critical for sticky in Chrome/Safari */
+  border-spacing: 0 !important;
+  overflow: visible !important;          /* undo global overflow:hidden */
+}
+#panel-bud .table-wrap thead th,
+#panel-tx  .table-wrap thead th{
+  position: sticky !important;
+  top: 0 !important;                      /* stick to wrapper top (desktop) */
+  z-index: 3;
+  background: #E4DECF;
+}
+
+/* ===========================================================
+   BBB: TABLE-LOCAL STICKY v3 — mobile page-scroll sticky
+   =========================================================== */
+@media (max-width: 640px), (hover: none) and (pointer: coarse){
+  /* Wrappers do not scroll on phones — page scroll instead */
+  #panel-bud .table-wrap,
+  #panel-tx  .table-wrap{
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Table headers stick to the viewport under the app header */
+  #panel-bud .table-wrap thead th,
+  #panel-tx  .table-wrap thead th{
+    position: sticky !important;
+    top: var(--stickytop) !important;
+    z-index: 3;
+    background: #E4DECF;
+  }
+
+  /* Neutralize any generic top:0 rule on phones */
+  .table-wrap th{ top: var(--stickytop) !important; }
+}
+
+/* Mobile jump chip */
+.mobile-jump{ display:flex; justify-content:flex-end; margin:4px 0 8px; }
+.mobile-jump .chip-link{
+  display:inline-block; padding:6px 10px; border:1px solid var(--panel-border);
+  border-radius:999px; background:#efe9db; text-decoration:none; color:var(--text);
+  font-weight:600; font-size:13px;
+}
+
+/* BBB: HOTFIX — scope mobile sticky to Explorer only */
+
+/* 1) Remove the global mobile override that was shifting Summary headers */
+@media (max-width: 640px), (hover: none) and (pointer: coarse){
+  /* Undo any previous global top override */
+  .table-wrap th{ top: 0 !important; }
+
+  /* 2) Apply viewport-sticky ONLY to Explorer sections */
+  #panel-bud .table-wrap thead th,
+  #panel-tx  .table-wrap thead th{
+    top: var(--stickytop) !important;   /* below the sticky app header */
+  }
+
+  /* 3) Keep Summary tables non-viewport-sticky (natural layout) */
+  #summaryArea .table-wrap thead th{
+    top: 0 !important;                  /* no viewport offset in Summary */
+    position: sticky;                   /* harmless; they won’t be viewport-sticky */
+  }
+}
+
 </style>
