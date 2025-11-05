@@ -16,6 +16,48 @@
       --gap:12px;
     }
 
+/* 🔥 Normalize ALL pill buttons (button + anchor) */
+.pill,
+button.pill,
+a.pill {
+  text-decoration: none !important;
+  color: var(--ink) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.3;
+  background:#efe9e2;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Primary variant */
+.pill.primary,
+button.pill.primary,
+a.pill.primary {
+  background: #ebd8c5;
+}
+/* Make pill links behave like pill buttons */
+a.pill {
+  text-decoration: none !important;
+  color: inherit !important;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove visited/active weird colors */
+a.pill:visited,
+a.pill:active,
+a.pill:hover {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
     body{background:var(--bg);color:var(--ink);}
     .wrap{max-width:1100px;margin:28px auto 56px;padding:0 16px;}
 
@@ -126,6 +168,61 @@
         border-radius:999px; font-weight:800;
       }
     }
+
+/* Tap target for the bunny */
+.icon-btn{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  font-size:1.25em; line-height:1; margin-right:8px; transform-origin:center;
+}
+.icon-btn.bonk{ animation:egg-bonk .16s ease; }
+@keyframes egg-bonk{ from{transform:scale(.9) rotate(-6deg)} to{transform:scale(1) rotate(0)} }
+
+/* Overlay */
+.egg-overlay{
+  position:fixed; inset:0; display:none; z-index:9998;
+  background:rgba(0,0,0,.45); backdrop-filter:blur(2px);
+}
+.egg-overlay.open{ display:flex; align-items:flex-end; }
+
+/* Sheet (mobile bottom sheet, desktop centered) */
+.egg-sheet{
+  width:100%; max-height:90vh; overflow:auto; background:#fff;
+  border-top-left-radius:22px; border-top-right-radius:22px;
+  box-shadow:0 -16px 40px rgba(0,0,0,.28);
+  padding:18px 16px 20px; animation:egg-up .22s ease;
+}
+@keyframes egg-up{ from{transform:translateY(14px); opacity:.9} to{transform:translateY(0); opacity:1} }
+
+.egg-head{ display:flex; justify-content:center; margin-bottom:8px; }
+.egg-grip{ width:48px; height:5px; border-radius:999px; background:#e6e1dc; opacity:.95; }
+
+.egg-title{ text-align:center; margin:6px 0 10px; font-weight:800; }
+.egg-body{ text-align:center; margin:0 0 8px; }
+.egg-perks{ margin:8px 0 10px 18px; }
+.egg-quote{
+  margin:10px 0; padding:10px 12px; background:#fff7e9; border-left:4px solid #f1c27d;
+  border-radius:10px;
+}
+.egg-actions{ display:flex; justify-content:center; }
+.btn.primary{ background:#ebd8c5; border:1px solid rgba(0,0,0,.06); border-radius:999px; padding:12px 18px; font-weight:800; }
+
+/* Desktop center */
+@media (min-width:980px){
+  .egg-overlay{ align-items:center; justify-content:center; }
+  .egg-sheet{ width:min(640px,92vw); border-radius:22px; }
+}
+
+/* Make the bunny super tappable on phones */
+.icon-btn{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  font-size:1.6em; line-height:1; margin-right:8px; transform-origin:center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;           /* disables double-tap zoom */
+  padding: 8px;                          /* bigger hit target */
+  border-radius: 12px;                   /* nicer focus ring radius */
+}
+.icon-btn:focus-visible{ outline: 2px solid rgba(0,0,0,.25); outline-offset:2px; }
+
   </style>
 </head>
 
@@ -149,13 +246,16 @@
         <div class="kicker">📊 Dashboard</div>
         <h3>Bunny Dashboard &amp; Transactions</h3>
         <p>See Dashboard and transactions</p>
-        <a class="pill"
-           href="<?= BASE_URL ?>?view=index"
-           target="_top" rel="noopener">Open Dashboard</a>
+        <a class="pill primary"
+          href="<?= BASE_URL ?>?view=index"
+          target="_top" rel="noopener">Open Dashboard</a>
       </section>
 
       <section class="card">
-        <div class="kicker">🐰 Profile</div>
+<div class="kicker">
+  <button id="eggBunny" class="icon-btn" type="button" aria-label="Secret bunny">🐰</button>
+  Profile
+</div>
         <h3>Manage Bunny Info</h3>
         <p>Categories, accounts, preferences… cozy burrow things.</p>
         <div class="ribbon">COMING SOON</div>
@@ -211,6 +311,32 @@
       </form>
     </aside>
   </div>
+
+  <!-- 🥕 Easter Egg Overlay -->
+<div class="egg-overlay" id="eggOverlay" aria-hidden="true">
+  <aside class="egg-sheet" role="dialog" aria-modal="true" aria-labelledby="eggTitle">
+    <div class="egg-head"><div class="egg-grip"></div></div>
+    <h3 id="eggTitle" class="egg-title">BUNNY! WHAT ARE YOU DOING!! THIS IS A SECRET!!</h3>
+
+    <p class="egg-body">
+      You found the hidden burrow. 🤫<br>
+      Claim your illicit reward:
+    </p>
+
+    <ul class="egg-perks">
+      <li>+1 Mischief</li>
+      <li>+3 Head Pats</li>
+      <li>Unlimited carrot credit (terms absolutely do not apply)</li>
+    </ul>
+
+    <blockquote class="egg-quote">“Good girrrrrl ✨ …but also, you saw nothing.”</blockquote>
+
+    <div class="egg-actions">
+      <button class="btn primary" id="eggClose" type="button">I won’t tell 🫢</button>
+    </div>
+  </aside>
+</div>
+
 
   <script>
     const BASE_URL = '<?= BASE_URL ?>';
@@ -283,5 +409,79 @@
         .quickAddTransaction(payload);
     });
   </script>
+
+<script>
+(() => {
+  const bunny   = document.getElementById('eggBunny');
+  const overlay = document.getElementById('eggOverlay');
+  const close   = document.getElementById('eggClose');
+
+  let taps = 0, timer = null;
+  const WINDOW_MS = 1500;      // 7 taps within 1.5s
+  let lastPointerId = null;    // avoid multi-fire on touchstart+click
+
+  function reset() {
+    taps = 0;
+    if (timer) { clearTimeout(timer); timer = null; }
+    lastPointerId = null;
+  }
+function openEgg() {
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden','false');
+
+  // ⛨ Ignore the first post-open tap so we don't insta-close
+  overlay.dataset.armed = "0";
+  setTimeout(() => { overlay.dataset.armed = "1"; }, 250);
+
+  if (navigator.vibrate) navigator.vibrate(60);
+}
+
+  function closeEgg() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden','true');
+  }
+
+  // Count taps on pointerdown (fast, mobile-friendly)
+  function handleTap(ev){
+    // Only primary finger/mouse
+    if (ev.pointerType && ev.isPrimary === false) return;
+    if (ev.button !== undefined && ev.button !== 0) return;
+
+    // De-dupe touchstart→click sequences
+    if (ev.pointerId !== undefined) {
+      if (lastPointerId === ev.pointerId) return;
+      lastPointerId = ev.pointerId;
+    }
+
+    bunny.classList.add('bonk');
+    setTimeout(() => bunny.classList.remove('bonk'), 160);
+
+    taps++;
+    if (!timer) timer = setTimeout(reset, WINDOW_MS);
+    if (taps >= 7) { reset(); openEgg(); }
+  }
+
+  // Pointer events first; fall back to touchstart if needed
+  if (window.PointerEvent) {
+    bunny.addEventListener('pointerdown', handleTap, { passive: true });
+  } else {
+    bunny.addEventListener('touchstart', (e) => { handleTap(e); }, { passive: true });
+    bunny.addEventListener('click', (e) => { handleTap(e); }); // desktop fallback
+  }
+
+overlay.addEventListener('click', (e) => {
+  // If we just opened, ignore this tap
+  if (overlay.dataset.armed !== "1") return;
+
+  // Only close when the backdrop itself is tapped (not inside the dialog)
+  if (e.target === overlay) closeEgg();
+}, { passive: true });
+  close.addEventListener('click', closeEgg);
+
+  // Extra: prevent long-press text selection/context menu from being annoying
+  bunny.addEventListener('contextmenu', (e)=> e.preventDefault());
+})();
+</script>
+
 </body>
 </html>
