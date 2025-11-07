@@ -499,6 +499,15 @@ function getQuickAddMeta(){
   return { accounts, types };
 }
 
+// Parse "YYYY-MM-DD" as a LOCAL midnight date (no UTC shift).
+function parseLocalDate_(yyyy_mm_dd) {
+  if (!yyyy_mm_dd) return null;
+  const [y, m, d] = String(yyyy_mm_dd).split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d); // local midnight in project timezone
+}
+
+
 /** SAFETY-FIRST Quick Add **/
 function quickAddTransaction(payload) {
   const ss = _ss();
@@ -510,7 +519,7 @@ function quickAddTransaction(payload) {
   const tmplRow = meta.templateRow || 2;         // template row is row 2
 
   // --- Validate inputs
-  const d = new Date(payload.date);
+const d = parseLocalDate_(payload.date);
   if (isNaN(d)) throw new Error('Invalid date');
 
   const type = String(payload.type || '').trim();

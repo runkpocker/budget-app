@@ -166,14 +166,30 @@
   var txCards  = document.getElementById('dxTxCards');
 
   if (seg && panelBud && panelTx){
-    seg.addEventListener('click', function(e){
-      var b = e.target.closest('.seg-btn[data-panel]');
-      if (!b) return;
-      seg.querySelectorAll('.seg-btn[data-panel]').forEach(x => x.classList.toggle('active', x===b));
-      var which = b.getAttribute('data-panel');
-      panelBud.classList.toggle('hidden', which!=='bud');
-      panelTx.classList.toggle('hidden',  which!=='tx');
-    });
+seg.addEventListener('click', function(e){
+  var b = e.target.closest('.seg-btn[data-panel]');
+  if (!b) return;
+
+  var isBud = b.getAttribute('data-panel') === 'bud';
+  var panel = isBud ? panelBud : panelTx;
+  var otherPanel = isBud ? panelTx : panelBud;
+  var otherBtn   = seg.querySelector('.seg-btn[data-panel="' + (isBud ? 'tx' : 'bud') + '"]');
+
+  // Toggle this panel ON/OFF
+  var turningOn = panel.classList.contains('hidden');
+  if (turningOn) {
+    panel.classList.remove('hidden');
+    b.classList.add('active');
+    b.setAttribute('aria-pressed','true');
+  } else {
+    // Don’t allow BOTH to be hidden — keep at least one visible
+    if (otherPanel.classList.contains('hidden')) return;
+    panel.classList.add('hidden');
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed','false');
+  }
+});
+
   }
 
   function buildCardsFromTable(){

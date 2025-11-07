@@ -302,3 +302,83 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
 }
 
 </style>
+
+<style>
+/* ===== BALUT SPLASH (mobile-first, scoped to landing page) ===== */
+@media (hover:none) and (pointer:coarse) {
+  .balut-splash {
+    position: fixed; inset: 0; z-index: 9999;
+    display: none; /* becomes flex when opened */
+    align-items: center; justify-content: center;
+    background: radial-gradient(120% 120% at 50% 10%, #fffdfa 0%, #ffeecf 40%, #ffd9a1 100%);
+    font-family: "Book Antiqua", Palatino, "Palatino Linotype", serif;
+    touch-action: manipulation;
+  }
+  .balut-splash.open { display: flex; }
+
+  .balut-svg { width: min(86vw, 360px); height: auto; transform-origin: 50% 60%; }
+
+  .egg-body { fill: #fff3d9; stroke: #e7d4ac; stroke-width: 3; }
+  .egg-crack { fill: none; stroke: #c59b64; stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round; }
+  .egg-yolk { fill: #f6b606; }
+  .egg-shadow { fill: rgba(0,0,0,0.08); filter: blur(1px); }
+
+  .balut-caption {
+    position: absolute; bottom: 10vh; left: 0; right: 0;
+    text-align: center; font-weight: 800; font-size: clamp(1rem, 3.8vw, 1.25rem);
+    color: rgba(0,0,0,0.7);
+    animation: balutHint 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes balutHint { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+
+  .balut-skip {
+    position: absolute; top: env(safe-area-inset-top, 8px); right: 10px;
+    background: rgba(0,0,0,0.08); border: 0; border-radius: 999px;
+    padding: 10px 14px; font-weight: 800; cursor: pointer;
+  }
+
+  .balut-splash.open .balut-svg { animation: balutEnter 600ms cubic-bezier(.2,.9,.25,1) both; }
+  @keyframes balutEnter {
+    0% { transform: translateY(30vh) scale(.8) rotate(-6deg); opacity: 0; }
+    60% { transform: translateY(-2vh) scale(1.02) rotate(2deg); opacity: 1; }
+    100% { transform: translateY(0) scale(1) rotate(0); }
+  }
+
+  .balut-splash.crack .egg-crack { animation: balutCrack 360ms ease-in-out both; }
+  @keyframes balutCrack { 0% { stroke-dasharray: 0 600; } 100% { stroke-dasharray: 600 0; } }
+  .balut-splash.crack .egg-yolk { animation: yolkPop 520ms cubic-bezier(.2,1,.2,1) 100ms both; }
+  @keyframes yolkPop {
+    0% { transform: translateY(0) scale(0.7); opacity: .6; }
+    60% { transform: translateY(-14px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-6px) scale(1); }
+  }
+
+  /* confetti */
+  .balut-splash.confetti::before,
+  .balut-splash.confetti::after {
+    content:""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle 4px, #f66 99%, transparent) 20% -10%/10% 50%,
+      radial-gradient(circle 4px, #6c6 99%, transparent) 60% -15%/12% 55%,
+      radial-gradient(circle 4px, #66f 99%, transparent) 80% -5%/8% 45%,
+      radial-gradient(circle 4px, #fc6 99%, transparent) 40% -20%/10% 60%;
+    animation: confettiFall 1200ms linear forwards;
+    opacity: .95;
+  }
+  @keyframes confettiFall {
+    to { background-position: 20% 110%, 60% 115%, 80% 105%, 40% 120%; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .balut-splash.open .balut-svg,
+    .balut-splash.crack .egg-crack,
+    .balut-splash.crack .egg-yolk,
+    .balut-caption { animation: none !important; }
+  }
+
+}
+
+/* Desktop never shows splash */
+@media (hover:hover) and (pointer:fine) { .balut-splash { display: none !important; } }
+</style>
+
