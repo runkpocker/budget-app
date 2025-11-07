@@ -199,31 +199,95 @@
     }
 
     /* === Busy animation parity with index — for ALL landing buttons/links === */
-#landing button.busy,
-#landing a.busy,
-#landing .pill.busy,
-#landing .btn.busy,
-#landing .icon-btn.busy {
-  font-weight: 700;
-  letter-spacing: .2px;
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 0 rgba(166,173,102,.35);
-  animation: btn-pulse 1100ms ease-in-out infinite, btn-wiggle 1200ms ease-in-out infinite;
+    #landing button.busy,
+    #landing a.busy,
+    #landing .pill.busy,
+    #landing .btn.busy,
+    #landing .icon-btn.busy {
+      font-weight: 700;
+      letter-spacing: .2px;
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 0 rgba(166,173,102,.35);
+      animation: btn-pulse 1100ms ease-in-out infinite, btn-wiggle 1200ms ease-in-out infinite;
+    }
+    @keyframes btn-pulse{
+      0%{ box-shadow:0 0 0 0 rgba(166,173,102,.35); }
+      70%{ box-shadow:0 0 12px 6px rgba(166,173,102,.2); }
+      100%{ box-shadow:0 0 0 0 rgba(166,173,102,0); }
+    }
+    @keyframes btn-wiggle{
+      0%{ transform: translateY(-1px) rotate(0); }
+      30%{ transform: translateY(-1px) rotate(-1.5deg); }
+      60%{ transform: translateY(-1px) rotate(1.5deg); }
+      100%{ transform: translateY(-1px) rotate(0); }
+    }
+
+    /* ====== EXTRA: Egg open animation pieces (scoped; safe) ====== */
+    @media (hover:none) and (pointer:coarse) {
+      .egg-top, .egg-bottom {
+        fill: #fff3d9; stroke: #e7d4ac; stroke-width: 3;
+        transition: transform 420ms cubic-bezier(.2,.9,.25,1);
+        transform-origin: 100px 120px; /* hinge at crack line */
+      }
+      .egg-inner { opacity: 0; transform: translateY(6px) scale(.9); transform-origin: 100px 150px;
+        transition: opacity 260ms ease-out 220ms, transform 320ms ease-out 220ms; }
+      .yolk { fill: #f6b606; }
+      .inner-emoji { font-size: 28px; }
+      .inner-caption { font-weight: 800; font-size: 14px; fill: #3b3532; }
+
+      .balut-splash.crack .egg-crack { animation: balutCrack 360ms ease-in-out both; }
+
+      .balut-splash.open-egg .egg-top    { transform: translateY(-30px) rotate(-8deg); }
+      .balut-splash.open-egg .egg-bottom { transform: translateY( 30px) rotate( 8deg); }
+      .balut-splash.open-egg .egg-inner  { opacity: 1; transform: translateY(0) scale(1); }
+
+      @media (prefers-reduced-motion: reduce) {
+        .egg-top, .egg-bottom { transition: none !important; }
+        .egg-inner { transition: none !important; }
+      }
+    }
+
+    /* === Balut splash sizing (tidy, centered, not gigantic) === */
+/* Hide by default; only show when .open */
+.balut-splash{
+  display:none;                 /* ← was grid; make it none */
+  min-height:58svh;
+  padding:8px 0;
+  place-items:center;           /* keep for when it’s visible */
+}
+.balut-splash.open{
+  display:grid;                 /* ← visible only when open */
+  place-items:center;
 }
 
-/* Reuse the same keyframes names used in styles.html */
-@keyframes btn-pulse{
-  0%{ box-shadow:0 0 0 0 rgba(166,173,102,.35); }
-  70%{ box-shadow:0 0 12px 6px rgba(166,173,102,.2); }
-  100%{ box-shadow:0 0 0 0 rgba(166,173,102,0); }
-}
-@keyframes btn-wiggle{
-  0%{ transform: translateY(-1px) rotate(0); }
-  30%{ transform: translateY(-1px) rotate(-1.5deg); }
-  60%{ transform: translateY(-1px) rotate(1.5deg); }
-  100%{ transform: translateY(-1px) rotate(0); }
-}
+    .balut-svg{
+      width:min(82vw, 460px);  /* balanced on phones */
+      height:auto;
+      display:block;
+    }
 
+    .egg-top, .egg-bottom{ stroke-width:3 !important; }
+    .egg-crack{ stroke-width:3.2 !important; stroke-linecap:round; stroke-linejoin:round; }
+    .egg-shadow{ fill:rgba(0,0,0,.10) !important; }
+
+    .balut-caption{
+      position:static;
+      text-align:center;
+      margin-top:10px;
+      font-weight:800;
+      font-size:clamp(1.05rem, 1rem + 1vh, 1.3rem);
+      opacity:.95;
+    }
+
+    /* small phones */
+    @media (max-width: 360px){
+      .balut-svg{ width:min(90vw, 420px); }
+    }
+
+    /* tall phones */
+    @media (min-height: 720px){
+      .balut-svg{ width:min(88vw, 520px); }
+    }
   </style>
 </head>
 
@@ -233,7 +297,85 @@
       <div class="bun">🐰</div>
       <h1>Bunny Balut Budget</h1>
     </div>
-    <p class="tagline">Daddy owns you, and your budget 🐾🐾 — pick your adventure:</p>
+    <p class="tagline">Daddy owns you, and your budget 🐾🐾 BRAT</p>
+
+    <!-- 🥚 BALUT SPLASH (mobile-only) -->
+    <div id="balutSplash" class="balut-splash" aria-hidden="true">
+      <button id="balutSkip" class="balut-skip" aria-label="Skip intro">Skip</button>
+
+      <!-- Cracking egg that opens to reveal fun Balut bits -->
+      <svg class="balut-svg" viewBox="0 0 200 260" role="img" aria-label="Balut splash">
+        <defs>
+          <!-- Clip the crack to the egg silhouette -->
+          <clipPath id="eggClip">
+            <ellipse cx="100" cy="120" rx="80" ry="110"></ellipse>
+          </clipPath>
+
+          <!-- Round mask for your photo -->
+          <clipPath id="eggInnerClip">
+            <circle cx="100" cy="150" r="32"></circle>
+          </clipPath>
+
+          <!-- Soft drop shadow for inner image (optional) -->
+          <filter id="eggInnerShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" flood-color="#000" flood-opacity="0.25"/>
+          </filter>
+        </defs>
+
+        <!-- shadow -->
+        <ellipse cx="100" cy="220" rx="60" ry="16" class="egg-shadow"/>
+
+        <!-- bottom half -->
+        <path class="egg-bottom" d="
+          M20,120
+          C20,200 180,200 180,120
+          C180,210 20,210 20,120 Z" />
+
+        <!-- top half -->
+        <path class="egg-top" d="
+          M20,120
+          C20,40 180,40 180,120
+          L180,120
+          C180,70 20,70 20,120 Z" />
+
+        <!-- Crack (stroke clipped to egg silhouette) -->
+        <g clip-path="url(#eggClip)">
+          <path
+            d="M30,120 70,130 60,150 95,140 85,165 115,155 110,175 140,165 135,185 170,175"
+            class="egg-crack"
+            vector-effect="non-scaling-stroke"
+          />
+        </g>
+
+        <!-- inner surprise (hidden until open) -->
+        <g class="egg-inner">
+          <!-- faint yolk glow behind the photo -->
+          <circle cx="100" cy="150" r="30" fill="#f6b606" opacity=".22"></circle>
+
+          <!-- YOUR IMAGE (direct lh3 URL) -->
+          <image
+            id="eggPhoto"
+            x="68" y="118" width="64" height="64"
+            href="https://lh3.googleusercontent.com/pw/AP1GczPG8WkMNQrx_ZOYqHsYKSGHdX42VPquhF0fYgPohai1a-StGKIJEW4EPLVMC4I67At0jRYPqWoi6kHgzykIMuK-hf2kJ1CyXu3vVt0F6GKwInCOOTTfnpKqjzoqDVACK-xTplY_ec5jmuMG9E7_ANViMQ=w454-h454-s-no-gm?authuser=0"
+            xlink:href="https://lh3.googleusercontent.com/pw/AP1GczPG8WkMNQrx_ZOYqHsYKSGHdX42VPquhF0fYgPohai1a-StGKIJEW4EPLVMC4I67At0jRYPqWoi6kHgzykIMuK-hf2kJ1CyXu3vVt0F6GKwInCOOTTfnpKqjzoqDVACK-xTplY_ec5jmuMG9E7_ANViMQ=w454-h454-s-no-gm?authuser=0"
+            clip-path="url(#eggInnerClip)"
+            preserveAspectRatio="xMidYMid slice"
+            style="filter:url(#eggInnerShadow); pointer-events:none"></image>
+
+          <!-- Caption ABOVE the photo with a white outline for contrast -->
+          <text x="100" y="192" text-anchor="middle"
+                class="inner-caption"
+                fill="#3b3532"
+                stroke="#ffffff"
+                stroke-width="3"
+                paint-order="stroke">
+            CHOGO BALUT 😋
+          </text>
+        </g>
+      </svg>
+
+      <div class="balut-caption">BALUT???? 🐣</div>
+    </div>
 
     <div class="cards">
       <section class="card">
@@ -332,6 +474,7 @@
 
   </div> <!-- /#landing -->
 
+  
   <script>
     const BASE_URL = '<?= BASE_URL ?>';
 
@@ -369,7 +512,7 @@
 
     const elType = document.getElementById('qaType');
     const elCat  = document.getElementById('qaCat');
-    const elAcct = document.getElementById('qaAcct');
+    theAcct = document.getElementById('qaAcct');
     const elDate = document.getElementById('qaDate');
     const elAmt  = document.getElementById('qaAmt');
     const elDesc = document.getElementById('qaDesc');
@@ -388,7 +531,7 @@
 
     function loadMeta(){
       google.script.run.withSuccessHandler(({accounts, types})=>{
-        fillSelect(elAcct, accounts, 'Choose account');
+        fillSelect(theAcct, accounts, 'Choose account');
         fillSelect(elType, types, 'Choose type');
         const d=new Date();
         elDate.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -408,7 +551,7 @@
       e.preventDefault();
       const payload={
         date: elDate.value, type: elType.value, category: elCat.value,
-        amount: elAmt.value, account: elAcct.value, description: elDesc.value
+        amount: elAmt.value, account: theAcct.value, description: elDesc.value
       };
       openBtn.disabled = true;
       google.script.run
@@ -452,95 +595,62 @@
     })();
   </script>
 
+  <!-- === BALUT SPLASH controller (tap to crack → open halves; second tap/Skip closes) === -->
+
   <script>
-/* === Busy helper (copies index behavior) === */
-function makeBusy(el, label='Good Girrrrrl ✨', ms=1200) {
-  if (!el) return () => {};
-  const prevHTML = el.innerHTML;
-  el.classList.add('busy');
-  // If element has visible text, swap it. Icons (🐰) we leave alone.
-  if (el.tagName !== 'BUTTON' || el.textContent.trim().length) {
-    el.innerHTML = label;
+  // === BALUT SPLASH MASTER SWITCH ===
+  // set to "on"  → splash runs
+  // set to "off" → splash is completely disabled
+  window.BALUT_SPLASH = "off";
+</script>
+
+
+  <script>
+  (function(){
+    const splash = document.getElementById('balutSplash');
+    if (!splash) return;
+
+      // ⛔ EXIT IMMEDIATELY IF DISABLED
+  if (window.BALUT_SPLASH !== "on") {
+    splash.remove();  // completely remove from DOM
+    return;
   }
-  let done = false;
-  const restore = () => {
-    if (done) return;
-    done = true;
-    el.classList.remove('busy');
-    el.innerHTML = prevHTML;
-  };
-  // Auto-restore after ms (like index refresh button)
-  const timer = setTimeout(restore, ms);
-  // Return a cancel function for caller to restore earlier on success/fail
-  return () => { clearTimeout(timer); restore(); };
+
+    const isMobileish = matchMedia('(hover:none) and (pointer:coarse)').matches;
+    const prefersLess = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function openSplash(){ splash.classList.add('open'); }
+    function closeSplash(){
+      splash.classList.remove('open','crack','confetti','open-egg');
+      splash.setAttribute('aria-hidden','true');
+    }
+
+    splash.addEventListener('click', (e) => {
+      if (e.target instanceof Element && e.target.id === 'balutSkip') { closeSplash(); return; }
+
+      // First tap: crack + confetti, then open the halves
+      if (!splash.classList.contains('crack')) {
+        splash.classList.add('crack','confetti');
+        setTimeout(() => splash.classList.add('open-egg'), 360);
+        return;
+      }
+
+      // If cracked but not open (edge case): open immediately
+      if (!splash.classList.contains('open-egg')) {
+        splash.classList.add('open-egg');
+        return;
+      }
+
+      // If already open: any tap closes
+      closeSplash();
+    });
+
+if (window.BALUT_SPLASH === "on" && isMobileish && !prefersLess) {
+  setTimeout(openSplash, 80);
 }
 
-/* === Wire up landing buttons === */
-document.addEventListener('DOMContentLoaded', () => {
-  // 1) Open Quick Add — busy while metadata loads
-  const openQA = document.getElementById('openQA');
-  if (openQA) {
-    openQA.addEventListener('click', (e) => {
-      const undo = makeBusy(openQA);
-      // loadMeta already runs in your click handler; patch its success/fail to restore
-      const origLoadMeta = window.loadMeta;
-      window.loadMeta = function(){
-        google.script.run
-          .withSuccessHandler((meta) => { try{ undo(); }catch(_){}; (origLoadMeta||function(){}) instanceof Function ? origLoadMeta.call(window) : null; })
-          .withFailureHandler(() => { try{ undo(); }catch(_){}; })
-          .getQuickAddMeta(); // we only need to trigger; the old loadMeta now replaced
-      };
-    }, { once:true }); // first click wires; subsequent clicks keep behavior
-  }
-
-  // 2) QA Submit — busy from submit until success/failure callback
-  const qaForm = document.getElementById('qaForm');
-  const qaSubmit = qaForm ? qaForm.querySelector('button[type="submit"]') : null;
-  if (qaForm && qaSubmit) {
-    qaForm.addEventListener('submit', () => {
-      const undo = makeBusy(qaSubmit);
-      // Hook into your existing success/failure handlers via monkey patch
-      const run = google.script.run;
-      // Wrap the chain used for quickAddTransaction to ensure we call undo()
-      // If your code already restores state, this just ensures animation parity.
-      // No need to change existing handlers; they already close sheet + toast.
-      setTimeout(() => { try{ undo(); }catch(_){}; }, 1600); // safety net
-    });
-  }
-
-  // 3) Dashboard pill (anchor) — quick pulse before navigation
-  const dashLink = document.querySelector('#landing a.pill[href*="?view=index"]');
-  if (dashLink) {
-    dashLink.addEventListener('click', (e) => {
-      // Start busy pulse so user sees feedback before nav
-      makeBusy(dashLink);
-      // Let the navigation happen naturally. No preventDefault.
-    });
-  }
-
-  // 4) QA Cancel + QA Close “×” — quick pulse so they feel responsive
-  const qaCancel = document.getElementById('closeQA');
-  const qaCloseIcon = document.getElementById('qaCloseIcon');
-  [qaCancel, qaCloseIcon].forEach((btn) => {
-    if (!btn) return;
-    btn.addEventListener('click', () => { makeBusy(btn, 'Closing…'); });
-  });
-
-  // 5) Easter-egg close button — playful pulse
-  const eggClose = document.getElementById('eggClose');
-  if (eggClose) {
-    eggClose.addEventListener('click', () => { makeBusy(eggClose); });
-  }
-
-  // 6) Optional: pulse the bunny icon on tap (no text swap)
-  const eggBunny = document.getElementById('eggBunny');
-  if (eggBunny) {
-    eggBunny.addEventListener('pointerdown', () => eggBunny.classList.add('busy'));
-    eggBunny.addEventListener('pointerup',   () => eggBunny.classList.remove('busy'));
-    eggBunny.addEventListener('pointercancel', () => eggBunny.classList.remove('busy'));
-  }
-});
-</script>
+  })();
+  </script>
 
 </body>
 </html>
