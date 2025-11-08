@@ -409,7 +409,7 @@
       <aside class="qa-sheet" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
         <button class="qa-close" id="qaCloseIcon" type="button" aria-label="Close">×</button>
         <h2 id="qaTitle" class="qa-title">Quick Add</h2>
-        <small class="qa-subtitle">Log it fast. Be a responsible menace.</small>
+        <small class="qa-subtitle">YAY BUNNY!</small>
 
         <form class="qa-form" id="qaForm">
           <div class="qa-row">
@@ -476,7 +476,13 @@
 
   
   <script>
-    const BASE_URL = '<?= BASE_URL ?>';
+    
+// Prevent double-submit across QA lifecycle
+let qaSubmitting = false;
+
+function getSubmitBtn(){ return document.querySelector('#qaForm button[type=\"submit\"]'); }
+function resetSubmitBtn(){ const b=getSubmitBtn(); if(!b) return; b.classList.remove('busy'); b.disabled=false; b.textContent='Add'; }
+const BASE_URL = '<?= BASE_URL ?>';
 
     /* QUICK ADD */
     const overlay = document.getElementById('qaOverlay');
@@ -493,7 +499,11 @@
     }
 
     function openSheet(){
-      overlay.classList.add('open');
+      
+  // reset Add button each open
+  qaSubmitting=false;
+  try{ resetSubmitBtn(); }catch(e){}
+overlay.classList.add('open');
       overlay.setAttribute('aria-hidden','false');
       document.body.classList.add('qa-open');
       setTimeout(()=>document.getElementById('qaDate')?.focus(),10);
@@ -529,41 +539,92 @@
       });
     }
 
-    function loadMeta(){
-      google.script.run.withSuccessHandler(({accounts, types})=>{
-        fillSelect(theAcct, accounts, 'Choose account');
-        fillSelect(elType, types, 'Choose type');
-        const d=new Date();
-        elDate.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
-        fillSelect(elCat, [], 'Choose category');
-      }).getQuickAddMeta();
-    }
+function loadMeta(){
+  // hard-lock Cat/Acct while we fetch meta
+  elCat.disabled = true;
+  elCat.innerHTML = '<option value="" disabled selected>Retrieving…</option>';
+  theAcct.disabled = true;
+  theAcct.innerHTML = '<option value="" disabled selected>Retrieving…</option>';
 
-    elType.addEventListener('change', ()=>{
-      const t = elType.value;
-      if (!t){ fillSelect(elCat, [], 'Choose category'); return; }
-      google.script.run.withSuccessHandler(cats=>{
-        fillSelect(elCat, cats, 'Choose category');
-      }).listCategoriesByType(t);
-    });
+  google.script.run.withSuccessHandler(({accounts, types})=>{
+    // Types: ready immediately
+    fillSelect(elType, types, 'Choose type');
+
+    // Accounts: prefill in the background BUT keep disabled until Category is chosen
+    fillSelect(theAcct, (accounts||[]).slice().sort(), '3) Pick account');
+    theAcct.disabled = true; // leave disabled; wizard unlocks after category lands
+
+    // Category stays locked until Type is chosen & cats come back
+    elCat.disabled = true;
+    elCat.innerHTML = '<option value="" disabled selected>2) Pick category</option>';
+
+    // Date today
+    const d=new Date();
+    elDate.value = new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  }).getQuickAddMeta();
+}
 
     document.getElementById('qaForm').addEventListener('submit', (e)=>{
-      e.preventDefault();
-      const payload={
-        date: elDate.value, type: elType.value, category: elCat.value,
-        amount: elAmt.value, account: theAcct.value, description: elDesc.value
-      };
-      openBtn.disabled = true;
-      google.script.run
-        .withSuccessHandler(()=>{
-          openBtn.disabled=false; closeSheet(); elAmt.value=''; elDesc.value='';
-          showToast('Added. Good girrrrrl ✨');
-        })
-        .withFailureHandler(err=>{
-          openBtn.disabled=false; alert('Quick Add failed: ' + (err?.message || err));
-        })
-        .quickAddTransaction(payload);
-    });
+  e.preventDefault();
+
+  if (qaSubmitting) return;
+  qaSubmitting = true;
+
+  const submitBtn = getSubmitBtn();
+  const prevTxt   = submitBtn ? submitBtn.textContent : null;
+
+  if (submitBtn){
+    submitBtn.classList.add('busy');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Good Girrrrrl ✨';
+  }
+  const controls = Array.from(document.querySelectorAll('#qaForm input, #qaForm select, #qaForm textarea, #qaForm button'));
+  controls.forEach(el => { if (el !== submitBtn) el.disabled = true; });
+
+  const openBtn = document.getElementById('openQA');
+  if (openBtn) openBtn.disabled = true;
+
+const payload = {
+  date:        document.getElementById('qaDate')?.value || '',
+  type:        document.getElementById('qaType')?.value || '',
+  category:    document.getElementById('qaCat')?.value || '',
+  account:     document.getElementById('qaAcct')?.value || '',
+  amount:      Number(document.getElementById('qaAmt')?.value || 0),
+  description: document.getElementById('qaDesc')?.value || ''
+};
+
+  google.script.run
+    .withSuccessHandler(()=>{
+      if (submitBtn){
+        submitBtn.classList.remove('busy');
+        submitBtn.disabled = false;
+        if (prevTxt!==null) submitBtn.textContent = prevTxt;
+      }
+      controls.forEach(el => el.disabled = false);
+      if (openBtn) openBtn.disabled = false;
+
+      try { closeSheet(); } catch(e){}
+      const elAmt  = document.getElementById('qaAmt');  if (elAmt)  elAmt.value='';
+      const elDesc = document.getElementById('qaDesc'); if (elDesc) elDesc.value='';
+
+      qaSubmitting = false;
+    })
+    .withFailureHandler(err=>{
+      if (submitBtn){
+        submitBtn.classList.remove('busy');
+        submitBtn.disabled = false;
+        if (prevTxt!==null) submitBtn.textContent = prevTxt;
+      }
+      controls.forEach(el => el.disabled = false);
+      if (openBtn) openBtn.disabled = false;
+
+      alert('Failed to add. Try again.');
+      console.error(err);
+
+      qaSubmitting = false;
+    })
+    .quickAddTransaction(payload);
+});
 
     /* EASTER EGG (scoped to landing) */
     (() => {
@@ -651,6 +712,155 @@ if (window.BALUT_SPLASH === "on" && isMobileish && !prefersLess) {
 
   })();
   </script>
+
+<script>
+// BBB_QA_WIZARD_LITE — locked until data, "Retrieving…" placeholders, race-proof, and auto-load
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function lockLoading(sel, text){
+    if (!sel) return;
+    sel.disabled = true;
+    sel.setAttribute('aria-busy','true');
+    sel.classList.add('select-disabled');
+    sel.innerHTML = '';
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = text || 'Retrieving…';
+    o.disabled = true;
+    o.selected = true;
+    o.className = 'option-loading';
+    sel.appendChild(o);
+  }
+  function unlockWithOptions(sel, items, placeholder){
+    if (!sel) return;
+    sel.removeAttribute('aria-busy');
+    sel.classList.remove('select-disabled');
+    sel.disabled = false;
+    sel.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = placeholder || 'Choose…';
+    ph.disabled = true;
+    ph.selected = true;
+    sel.appendChild(ph);
+    (items || []).forEach(v => {
+      const o = document.createElement('option');
+      o.value = o.textContent = v;
+      sel.appendChild(o);
+    });
+  }
+
+  // Data fetchers (prefer helpers; fallback to endpoints)
+  function fetchCats(type, ok, fail){
+    try{
+      const r = google?.script?.run;
+      if (!r) return fail?.('runner missing');
+      if (window.BBL_Helpers?.fetchCategories)
+        return BBL_Helpers.fetchCategories(type, ok, fail);
+      if (typeof r.listCategoriesByType === 'function')
+        return r.withSuccessHandler(ok).withFailureHandler(fail).listCategoriesByType(type);
+      fail?.('no category endpoint');
+    }catch(e){ fail?.(e); }
+  }
+  function fetchAccounts(ok, fail){
+    try{
+      const r = google?.script?.run;
+      if (!r) return fail?.('runner missing');
+      if (typeof r.BBL_getAccountEstimates === 'function'){
+        return r.withSuccessHandler(res=>{
+          ok(res && res.ok && res.data ? Object.keys(res.data) : []);
+        }).withFailureHandler(fail).BBL_getAccountEstimates();
+      }
+      if (typeof r.listAccounts === 'function')
+        return r.withSuccessHandler(ok).withFailureHandler(fail).listAccounts();
+      ok([]);
+    }catch(e){ fail?.(e); }
+  }
+
+  // Cache + request tokens
+  const QACache = { cats: { income:null, expense:null }, accts:null };
+  let catReqId = 0, acctReqId = 0;
+
+  function initQAWizard(){
+    const elType = $('qaType');
+    const elCat  = $('qaCat');
+    const elAcct = $('qaAcct');
+    if (!elType || !elCat || !elAcct) return;
+
+    // Always start locked
+    lockLoading(elCat,  '2) Pick category');
+    lockLoading(elAcct, '3) Pick account');
+
+    // Reusable loader (so we can call it on init and on change)
+    function loadCatsForCurrentType(){
+      const t = String(elType.value || '').toLowerCase();
+      const my = ++catReqId;
+
+      // Lock category while loading
+      lockLoading(elCat, 'Retrieving categories…');
+      // Reset & lock account too
+      lockLoading(elAcct, '3) Pick account');
+
+      const finish = (items)=>{
+        if (catReqId !== my) return; // stale
+        unlockWithOptions(elCat, items || [], '2) Pick category');
+      };
+
+      if (QACache.cats[t]) finish(QACache.cats[t]);
+      else fetchCats(t,
+        (items)=>{ QACache.cats[t]=items||[]; finish(items); },
+        (err)=>{ console.error('cats failed', err);
+                 if (catReqId !== my) return;
+                 unlockWithOptions(elCat, [], 'No categories found'); }
+      );
+    }
+
+    function loadAccounts(){
+      const my = ++acctReqId;
+      lockLoading(elAcct, 'Retrieving accounts…');
+
+      const put = (list)=>{
+        if (acctReqId !== my) return; // stale
+        unlockWithOptions(elAcct, (list||[]).slice().sort(), '3) Pick account');
+      };
+
+      if (QACache.accts) put(QACache.accts);
+      else fetchAccounts(
+        (list)=>{ QACache.accts=list||[]; put(list); },
+        (err)=>{ console.error('accounts failed', err);
+                 if (acctReqId !== my) return;
+                 unlockWithOptions(elAcct, [], 'No accounts found'); }
+      );
+    }
+
+    // Auto-load categories immediately for whatever Type is currently selected
+    if (elType.value) loadCatsForCurrentType();
+
+    // TYPE change -> reload categories
+    elType.addEventListener('change', loadCatsForCurrentType, { passive:true });
+
+    // CATEGORY change -> load accounts (only after categories are truly present)
+    elCat.addEventListener('change', ()=>{
+      if (elCat.disabled) return; // still locked → ignore
+      loadAccounts();
+    }, { passive:true });
+
+    // Submit guard: values only (don’t block just because disabled flags linger)
+    const form = document.getElementById('qaForm');
+    if (form) form.addEventListener('submit', (e)=>{
+      if (!elType.value){ e.preventDefault(); alert('Pick a Type first.'); return; }
+      if (!elCat.value){ e.preventDefault(); alert('Pick a Category next.'); return; }
+      if (!elAcct.value){ e.preventDefault(); alert('Lastly, pick an Account.'); return; }
+    });
+  }
+
+  // Init on open and DOM ready
+  $('openQA')?.addEventListener('click', ()=> setTimeout(initQAWizard, 50), {passive:true});
+  document.addEventListener('DOMContentLoaded', initQAWizard);
+})();
+</script>
+
 
 </body>
 </html>
