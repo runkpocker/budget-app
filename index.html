@@ -9,10 +9,16 @@
 }
 
 
+
 </style>
+
 <div class="container">
   <header class="app-header">
-    <h1>🐰 Bunny Balut Budget</h1>
+<h1>
+  <a href="<?= BASE_URL ?>?view=landing" target="_top" rel="noopener" class="bunny-home">🐰</a>
+  Bunny Balut Budget
+</h1>
+
     <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
   </header>
 
@@ -102,21 +108,22 @@
     </div>
 
     <!-- Collapsible sections -->
-    <details class="panel" id="bud-section" open>
-      <summary class="table-title">Budget</summary>
-      <div id="panel-bud">
-        <div class="table-wrap"><table id="dxBudgets"></table></div>
-      </div>
-    </details>
+    <div class="two-col" id="explorerLayout">
+      <details class="panel" id="bud-section" open>
+        <summary class="table-title">Budget</summary>
+        <div id="panel-bud">
+          <div class="table-wrap"><table id="dxBudgets"></table></div>
+        </div>
+      </details>
 
-    <details class="panel" id="tx-section" open>
-      <summary class="table-title" style="margin-top:16px">Transactions</summary>
-      <div id="panel-tx">
-        <div class="table-wrap"><table id="dxTx"></table></div>
-        <div id="dxTxCards" class="tx-cards hidden"></div>
-      </div>
-    </details>
-  </div>
+      <details class="panel" id="tx-section" open>
+        <summary class="table-title" style="margin-top:16px">Transactions</summary>
+        <div id="panel-tx">
+          <div class="table-wrap"><table id="dxTx"></table></div>
+          <div id="dxTxCards" class="tx-cards hidden"></div>
+        </div>
+      </details>
+    </div>
 
   <?!= include('client'); ?>
 </div>
@@ -337,12 +344,25 @@ seg.addEventListener('click', function(e){
         btn.classList.remove('busy');
 
         if (status) status.textContent = `✓ Set to ${res.b4}`;
-            
-      // NEW: auto-expand Summary panel
-        const sum = document.getElementById('sum-section');
-        if (sum) sum.open = true;
 
-        
+        const sum      = document.getElementById('sum-section');
+        const explorer = document.getElementById('explorerCard');
+        const isPhone  = window.matchMedia('(max-width: 640px), (hover:none) and (pointer:coarse)').matches;
+
+        // On tablet/desktop, open Summary; on phones, collapse it
+        if (sum) {
+          if (isPhone) {
+            sum.removeAttribute('open');   // hide the Actual vs Budget / Income / Expense cards
+          } else {
+            sum.open = true;               // still nice to see on bigger screens
+          }
+        }
+
+        // On phones, after setting the month, jump the user down to Explorer
+        if (isPhone && explorer) {
+          explorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         if (typeof renderTable === 'function') {
           renderTable('tblActVsBud', res.actVsBud);
           renderTable('tblIncome',   res.income);
@@ -356,6 +376,7 @@ seg.addEventListener('click', function(e){
           detail: { month: norm, includeTx: includeTx, displayMonth: res.b4 }
         }));
       })
+
       .withFailureHandler((err) => {
         btn.textContent = prev;
         btn.classList.remove('busy');
@@ -409,44 +430,34 @@ seg.addEventListener('click', function(e){
 </script>
 
 <!-- Desktop inner-scroll; Mobile page-scroll -->
+<!-- Explorer uses page scroll everywhere; no inner scroll wrappers -->
 <script>
 (function(){
-  function isMobile(){
-    return window.matchMedia('(max-width: 640px), (hover: none) and (pointer: coarse)').matches;
-  }
-  function sizeSectionWrap(panelId){
+  function clearSectionWrap(panelId){
     var panel = document.getElementById(panelId);
     if (!panel) return;
     var wrap = panel.querySelector('.table-wrap');
     if (!wrap) return;
 
-    if (isMobile()){
-      wrap.style.maxHeight = '';
-      wrap.style.overflow  = '';
-      wrap.style.webkitOverflowScrolling = '';
-      return;
-    }
-
-    var rect = wrap.getBoundingClientRect();
-    var avail = window.innerHeight - rect.top - 12;
-    var h = Math.max(240, Math.floor(avail));
-    wrap.style.maxHeight = h + 'px';
-    wrap.style.overflow  = 'auto';
-    wrap.style.webkitOverflowScrolling = 'touch';
+    // Remove any JS-set sizing/overflow so the page scrolls normally
+    wrap.style.maxHeight = '';
+    wrap.style.overflow  = '';
+    wrap.style.webkitOverflowScrolling = '';
   }
-  function sizeAll(){
-    sizeSectionWrap('panel-bud');
-    sizeSectionWrap('panel-tx');
+  function clearAll(){
+    clearSectionWrap('panel-bud');
+    clearSectionWrap('panel-tx');
   }
-  sizeAll();
-  window.addEventListener('resize', sizeAll, {passive:true});
-  window.addEventListener('orientationchange', sizeAll, {passive:true});
-  document.addEventListener('DOMContentLoaded', sizeAll);
-  window.addEventListener('load', sizeAll);
-  document.addEventListener('summary-month-set', sizeAll);
-  document.addEventListener('dx-refresh-complete', sizeAll);
+  clearAll();
+  window.addEventListener('resize', clearAll, {passive:true});
+  window.addEventListener('orientationchange', clearAll, {passive:true});
+  document.addEventListener('DOMContentLoaded', clearAll);
+  window.addEventListener('load', clearAll);
+  document.addEventListener('summary-month-set', clearAll);
+  document.addEventListener('dx-refresh-complete', clearAll);
 })();
 </script>
+
 
 <!-- Ensure THEAD exists for sticky headers -->
 <script>

@@ -48,6 +48,33 @@ body{
   display:flex; align-items:center; gap:8px; }
 .row{ display:flex; gap:8px; align-items:center; margin-top:8px; }
 
+.bunny-home {
+  text-decoration: none;
+  color: inherit;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.bunny-home:hover {
+  opacity: 0.7;
+}
+
+
+/* Generic two-column layout for dashboard sections (e.g., Explorer) */
+.two-col{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+/* On phones, collapse any .two-col to a single column */
+@media (max-width:640px){
+  .two-col{
+    grid-template-columns:1fr;
+  }
+}
+
+
 /* Summary containers */
 .summary-flex-final{ display:flex; gap:12px; width:100%; }
 .summary-flex-final > .summary-col{ flex:1 1 0; }
@@ -231,10 +258,11 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
 #panel-bud .table-wrap,
 #panel-tx  .table-wrap{
   position: relative;
-  max-height: 60svh;              /* desktop fallback; JS sets exact */
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  max-height: none;               /* no inner scroll container */
+  overflow: visible;              /* let the page scroll instead */
+  -webkit-overflow-scrolling: auto;
 }
+
 #panel-bud .table-wrap table,
 #panel-tx  .table-wrap table{
   border-collapse: separate !important;  /* critical for sticky in Chrome/Safari */
@@ -282,26 +310,42 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
 }
 
 /* BBB: HOTFIX — scope mobile sticky to Explorer only */
-
-/* 1) Remove the global mobile override that was shifting Summary headers */
 @media (max-width: 640px), (hover: none) and (pointer: coarse){
-  /* Undo any previous global top override */
-  .table-wrap th{ top: 0 !important; }
 
-  /* 2) Apply viewport-sticky ONLY to Explorer sections */
+  /* Undo any previous global top override */
+  .table-wrap th{
+    top: 0 !important;
+  }
+
+  /* Apply viewport-sticky ONLY to Explorer sections */
   #panel-bud .table-wrap thead th,
   #panel-tx  .table-wrap thead th{
     top: var(--stickytop) !important;   /* below the sticky app header */
+    position: sticky !important;
   }
 
-  /* 3) Keep Summary tables non-viewport-sticky (natural layout) */
+  /* Summary tables: NO sticky at all on mobile */
+  #summaryArea .table-wrap th,
   #summaryArea .table-wrap thead th{
-    top: 0 !important;                  /* no viewport offset in Summary */
-    position: sticky;                   /* harmless; they won’t be viewport-sticky */
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
   }
 }
 
+
 </style>
+
+<style>
+/* Disable sticky headers for Summary tables only */
+#summaryArea .table-wrap th,
+#summaryArea .table-wrap thead th{
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+</style>
+
 
 <style>
 /* ===== BALUT SPLASH (mobile-first, scoped to landing page) ===== */
@@ -392,3 +436,53 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
   border:2px solid currentColor; border-right-color: transparent; animation: qaspin 700ms linear infinite; vertical-align: -1px; }
 @keyframes qaspin { to { transform: rotate(360deg); } }
 </style>
+
+<style>
+
+/* =========================
+   Tablet enhancements (Xiaomi Pad 7, iPad class)
+   641px–1100px
+   ========================= */
+@media (min-width: 641px) and (max-width: 1100px){
+
+  /* Give cards a bit more breathing room on tablet */
+  .card{
+    padding:20px 18px;
+  }
+
+  /* Slightly larger controls for tablet thumbs (phones already handled at <=640) */
+  input,
+  select,
+  button{
+    min-height:44px;
+    padding:10px 14px;
+    font-size:15px;
+  }
+
+  /* Filters on the dashboard: more space between controls */
+  .filter-row{
+    gap:10px 16px;
+  }
+
+  /* Summary row: a little more spacing between columns on tablet */
+  .summary-flex-final{
+    gap:16px;
+  }
+  .summary-flex-final > .summary-col{
+    min-width:0; /* keeps them flexible without hard widths */
+  }
+
+  /* Table titles read better at tablet distance */
+  .table-title{
+    font-size:17px;
+  }
+
+  /* Cell padding tuned for tablet (between phone + desktop) */
+  th,td{
+    padding:9px 12px;
+  }
+}
+
+
+</style>
+
