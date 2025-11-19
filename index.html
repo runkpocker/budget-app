@@ -17,12 +17,10 @@
     <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
   </header>
 
-  <!-- Mobile jump chip -->
   <div class="mobile-jump hidden" id="jumpExplorer">
     <a href="#explorerCard" class="chip-link">Jump to Explorer ↓</a>
   </div>
 
-  <!-- Month picker bar -->
   <div class="card" id="monthBar">
     <div class="row">
       <strong>Pick a month, Bunny!</strong>
@@ -44,7 +42,6 @@
 
   <section class="cards">
     <div class="card">
-      <!-- Summary now collapsible -->
       <details id="sum-section" class="panel" open>
         <summary class="table-title">Summary</summary>
 
@@ -73,7 +70,6 @@
       <span id="dxMonthBadge" class="chip">Month Set: not set</span>
     </div>
 
-    <!-- Segmented tabs (non-sticky) -->
     <div class="seg seg-top" id="dxSeg">
       <button class="seg-btn" data-panel="bud">Budget</button>
       <button class="seg-btn active" data-panel="tx">Transactions</button>
@@ -93,7 +89,6 @@
       <button id="dxRefresh" class="action">Refresh Transactions</button>
     </div>
 
-    <!-- Collapsible sections: Budget above Transactions, Budget collapsed by default -->
     <details class="panel" id="bud-section">
       <summary class="table-title">Budget</summary>
       <div id="panel-bud">
@@ -115,20 +110,6 @@
   
 </div>
 
-<!-- Sticky Explorer helper — disabled -->
-<!--
-<script>
-(function(){
-  var refresh = document.getElementById('dxRefresh');
-  if (!refresh) return;
-  var card = refresh.closest('.card');
-  if (!card) return;
-  card.classList.add('sticky-explorer');
-})();
-</script>
--->
-
-<!-- Desktop: Explorer fills viewport; mobile: page scroll only -->
 <script>
 (function(){
   var card = document.getElementById('explorerCard');
@@ -153,7 +134,6 @@
 })();
 </script>
 
-<!-- Tabs + Cards view for Transactions -->
 <script>
 (function(){
   var seg      = document.getElementById('dxSeg');
@@ -258,53 +238,6 @@
 })();
 </script>
 
-<!-- Shimmer toggler -->
-<script>
-(function(){
-  if (!window.showBusy || !window.hideBusy) return;
-  var prevShow = window.showBusy, prevHide = window.hideBusy;
-  window.showBusy = function(){
-    try{ document.body.classList.add('bb-busy'); }catch(e){}
-    return prevShow.apply(this, arguments);
-  };
-  window.hideBusy = function(){
-    var r = prevHide.apply(this, arguments);
-    if (!window.loadingCounter || window.loadingCounter <= 0) {
-      try{ document.body.classList.remove('bb-busy'); }catch(e){}
-    }
-    return r;
-  };
-})();
-</script>
-
-<!-- 15s retry hint -->
-<script>
-(function(){
-  var modal = document.getElementById('busyModal');
-  var text  = modal ? modal.querySelector('.modal-text') : null;
-  if (!text || !window.showBusy || !window.hideBusy) return;
-
-  var t = null;
-  function arm(){
-    clearTimeout(t);
-    t = setTimeout(function(){
-      if (window.loadingCounter > 0) {
-        text.textContent = "This carrot patch is thicc 🥕🥕 — still fetching… try again if it stalls.";
-      }
-    }, 15000);
-  }
-
-  var _show = window.showBusy, _hide = window.hideBusy;
-  window.showBusy = function(){ arm(); return _show.apply(this, arguments); };
-  window.hideBusy = function(){
-    var r = _hide.apply(this, arguments);
-    if (!window.loadingCounter || window.loadingCounter <= 0) clearTimeout(t);
-    return r;
-  };
-})();
-</script>
-
-<!-- Set Month handler -->
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -397,7 +330,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<!-- Sticky offset measurer -->
 <script>
 (function(){
   function setStickyOffsets(){
@@ -424,7 +356,6 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
-<!-- Explorer uses page scroll everywhere; no inner scroll wrappers -->
 <script>
 (function(){
   function clearSectionWrap(panelId){
@@ -452,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
-<!-- Ensure THEAD exists for sticky headers -->
 <script>
 (function(){
   function ensureStickyThead(tableId){
@@ -508,7 +438,6 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
-<!-- BBB_TX_SORT_DOM — always keep Transactions sorted by Date DESC -->
 <script>
 (function(){
   function sortTxTable(){
@@ -573,4 +502,3 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 })();
 </script>
-
