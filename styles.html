@@ -1,16 +1,3 @@
-<!--
-  🐰 Bunny Styles Guardrails — MOBILE-SAFE RULES
-  ----------------------------------------------
-  - Do NOT remove or override phone breakpoints (<=640px, <=900px).
-  - Do NOT attach fixed widths/heights to dashboard summary or explorer.
-  - Tables must ALWAYS be wrapped in .table-wrap to prevent horizontal overflow.
-  - Buttons/inputs must remain >=44px tall on phones.
-  - Landing's pointer:coarse + clamp scaling is the canonical mobile pattern.
-  - Avoid absolute positioning inside card bodies unless layered and responsive.
-  - Respect prefers-reduced-motion; no forced animations.
-  - Any new layout must degrade gracefully on touch devices.
--->
-
 <style>
 /* =========================
    Theme tokens
@@ -59,28 +46,20 @@ body{
   opacity: 0.7;
 }
 
-
-/* Generic two-column layout for dashboard sections (e.g., Explorer) */
+/* Generic two-column layout for dashboard sections */
 .two-col{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
-
-/* On phones, collapse any .two-col to a single column */
 @media (max-width:640px){
-  .two-col{
-    grid-template-columns:1fr;
-  }
+  .two-col{ grid-template-columns:1fr; }
 }
 
 
 /* Summary containers */
 .summary-flex-final{ display:flex; gap:12px; width:100%; }
 .summary-flex-final > .summary-col{ flex:1 1 0; }
-
-/* Legacy grid */
-.grid{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
 
 /* Forms */
 .form input,.form select{
@@ -150,6 +129,29 @@ button.busy{
   100%{ transform: translateY(-1px) rotate(0); }
 }
 
+/* ========================= KPI HERO ========================= */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  background: #fff;
+  padding: 16px 12px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.kpi-label { font-size: 0.85rem; opacity: 0.7; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; color: var(--ink); }
+
+/* KPI Colors */
+.kpi-card.income .kpi-value { color: var(--olive); }
+.kpi-card.expense .kpi-value { color: var(--rust); }
+.kpi-card.net .kpi-value { color: var(--text); }
+
 /* ========================= Modal ========================= */
 .hidden{ display:none !important; }
 .modal{ position:fixed; inset:0; display:grid; place-items:center; background:var(--overlay);
@@ -191,6 +193,10 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
   body{ font-size:17px; line-height:1.5; }
   .container{ padding:0 12px; }
   .card{ padding:12px; }
+  
+  /* KPI Stack compact on phones */
+  .kpi-value { font-size: 1.15rem; }
+  .kpi-grid { gap: 8px; }
 
   #qaForm { gap: 8px; }
   #qaForm label { font-size: 12px; }
@@ -333,156 +339,17 @@ input:focus, select:focus, button:focus{ color:var(--text); border-color:var(--a
   }
 }
 
-
-</style>
-
-<style>
-/* Disable sticky headers for Summary tables only */
-#summaryArea .table-wrap th,
-#summaryArea .table-wrap thead th{
-  position: static !important;
-  top: auto !important;
-  z-index: auto !important;
-}
-</style>
-
-
-<style>
-/* ===== BALUT SPLASH (mobile-first, scoped to landing page) ===== */
-@media (hover:none) and (pointer:coarse) {
-  .balut-splash {
-    position: fixed; inset: 0; z-index: 9999;
-    display: none; /* becomes flex when opened */
-    align-items: center; justify-content: center;
-    background: radial-gradient(120% 120% at 50% 10%, #fffdfa 0%, #ffeecf 40%, #ffd9a1 100%);
-    font-family: "Book Antiqua", Palatino, "Palatino Linotype", serif;
-    touch-action: manipulation;
-  }
-  .balut-splash.open { display: flex; }
-
-  .balut-svg { width: min(86vw, 360px); height: auto; transform-origin: 50% 60%; }
-
-  .egg-body { fill: #fff3d9; stroke: #e7d4ac; stroke-width: 3; }
-  .egg-crack { fill: none; stroke: #c59b64; stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round; }
-  .egg-yolk { fill: #f6b606; }
-  .egg-shadow { fill: rgba(0,0,0,0.08); filter: blur(1px); }
-
-  .balut-caption {
-    position: absolute; bottom: 10vh; left: 0; right: 0;
-    text-align: center; font-weight: 800; font-size: clamp(1rem, 3.8vw, 1.25rem);
-    color: rgba(0,0,0,0.7);
-    animation: balutHint 1.2s ease-in-out infinite alternate;
-  }
-  @keyframes balutHint { from { transform: translateY(0); } to { transform: translateY(-6px); } }
-
-  .balut-skip {
-    position: absolute; top: env(safe-area-inset-top, 8px); right: 10px;
-    background: rgba(0,0,0,0.08); border: 0; border-radius: 999px;
-    padding: 10px 14px; font-weight: 800; cursor: pointer;
-  }
-
-  .balut-splash.open .balut-svg { animation: balutEnter 600ms cubic-bezier(.2,.9,.25,1) both; }
-  @keyframes balutEnter {
-    0% { transform: translateY(30vh) scale(.8) rotate(-6deg); opacity: 0; }
-    60% { transform: translateY(-2vh) scale(1.02) rotate(2deg); opacity: 1; }
-    100% { transform: translateY(0) scale(1) rotate(0); }
-  }
-
-  .balut-splash.crack .egg-crack { animation: balutCrack 360ms ease-in-out both; }
-  @keyframes balutCrack { 0% { stroke-dasharray: 0 600; } 100% { stroke-dasharray: 600 0; } }
-  .balut-splash.crack .egg-yolk { animation: yolkPop 520ms cubic-bezier(.2,1,.2,1) 100ms both; }
-  @keyframes yolkPop {
-    0% { transform: translateY(0) scale(0.7); opacity: .6; }
-    60% { transform: translateY(-14px) scale(1.2); opacity: 1; }
-    100% { transform: translateY(-6px) scale(1); }
-  }
-
-  /* confetti */
-  .balut-splash.confetti::before,
-  .balut-splash.confetti::after {
-    content:""; position: absolute; inset: 0; pointer-events: none;
-    background:
-      radial-gradient(circle 4px, #f66 99%, transparent) 20% -10%/10% 50%,
-      radial-gradient(circle 4px, #6c6 99%, transparent) 60% -15%/12% 55%,
-      radial-gradient(circle 4px, #66f 99%, transparent) 80% -5%/8% 45%,
-      radial-gradient(circle 4px, #fc6 99%, transparent) 40% -20%/10% 60%;
-    animation: confettiFall 1200ms linear forwards;
-    opacity: .95;
-  }
-  @keyframes confettiFall {
-    to { background-position: 20% 110%, 60% 115%, 80% 105%, 40% 120%; opacity: 0; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .balut-splash.open .balut-svg,
-    .balut-splash.crack .egg-crack,
-    .balut-splash.crack .egg-yolk,
-    .balut-caption { animation: none !important; }
-  }
-
-}
-
-/* Desktop never shows splash */
-@media (hover:hover) and (pointer:fine) { .balut-splash { display: none !important; } }
-</style>
-
-
-<style>
-/* BBB_QA_WIZARD_UTILS */
-.select-disabled { opacity: .6; pointer-events: none; }
-.select-hint { font-size: .85rem; opacity: .8; margin-top: 4px; }
-.option-loading { font-style: italic; opacity: .8; }
-.qaspin { display:inline-block; width:12px; height:12px; margin-left:6px; border-radius:50%;
-  border:2px solid currentColor; border-right-color: transparent; animation: qaspin 700ms linear infinite; vertical-align: -1px; }
-@keyframes qaspin { to { transform: rotate(360deg); } }
-</style>
-
-<style>
-
 /* =========================
    Tablet enhancements (Xiaomi Pad 7, iPad class)
    641px–1100px
    ========================= */
 @media (min-width: 641px) and (max-width: 1100px){
-
-  /* Give cards a bit more breathing room on tablet */
-  .card{
-    padding:20px 18px;
-  }
-
-  /* Slightly larger controls for tablet thumbs (phones already handled at <=640) */
-  input,
-  select,
-  button{
-    min-height:44px;
-    padding:10px 14px;
-    font-size:15px;
-  }
-
-  /* Filters on the dashboard: more space between controls */
-  .filter-row{
-    gap:10px 16px;
-  }
-
-  /* Summary row: a little more spacing between columns on tablet */
-  .summary-flex-final{
-    gap:16px;
-  }
-  .summary-flex-final > .summary-col{
-    min-width:0; /* keeps them flexible without hard widths */
-  }
-
-  /* Table titles read better at tablet distance */
-  .table-title{
-    font-size:17px;
-  }
-
-  /* Cell padding tuned for tablet (between phone + desktop) */
-  th,td{
-    padding:9px 12px;
-  }
+  .card{ padding:20px 18px; }
+  input, select, button{ min-height:44px; padding:10px 14px; font-size:15px; }
+  .filter-row{ gap:10px 16px; }
+  .summary-flex-final{ gap:16px; }
+  .summary-flex-final > .summary-col{ min-width:0; }
+  .table-title{ font-size:17px; }
+  th,td{ padding:9px 12px; }
 }
-
-
 </style>
-

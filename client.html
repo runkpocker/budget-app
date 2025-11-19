@@ -12,7 +12,7 @@ function showBusy() {
   const m = qs('busyModal');
   if (m) {
     m.classList.remove('hidden');
-    document.body.classList.add('bb-busy'); // Styling hook
+    document.body.classList.add('bb-busy'); 
     
     // Start "slow network" hint timer
     clearTimeout(retryTimer);
@@ -36,7 +36,7 @@ function hideBusy() {
   }
 }
 
-// Busy message helpers (kept for summary + data fetches)
+// Busy message helpers
 const busyState = { budgets: false, tx: false };
 function setBusyMessage(text) {
   const el = document.getElementById('busyModal');
@@ -52,14 +52,10 @@ function updateBusyMessage() {
 }
 
 // ---- Summary renderer compatibility shim ----
-// Summary's Set Month flow still calls `renderTable(elOrId, rows)`.
-// Point it to the new simple renderer so nothing else needs to change.
 window.renderTable = function renderTableCompat(elOrId, rows) {
-  // uses the simple array-of-arrays renderer we defined
   if (typeof renderSimpleTable === 'function') {
     renderSimpleTable(elOrId, rows);
   } else {
-    // ultra-safe fallback in case someone deletes that too
     const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
     if (!el) return;
     el.innerHTML = '';
@@ -76,7 +72,7 @@ window.renderTable = function renderTableCompat(elOrId, rows) {
   }
 };
 
-// ---------- Summary tables (left as-is) ----------
+// ---------- Summary tables ----------
 function renderSimpleTable(el, rows) {
   const tbl = typeof el === 'string' ? qs(el) : el;
   tbl.innerHTML = '';
@@ -98,10 +94,9 @@ function renderSimpleTable(el, rows) {
 // ---------- Data Explorer helpers ----------
 (function(){
   const $ = (id) => document.getElementById(id);
-  window.__summaryMonth = window.__summaryMonth || ''; // 'YYYY-MM'
+  window.__summaryMonth = window.__summaryMonth || ''; 
   let txPage = 1;
 
-  // Small helpers to build selects
   function populateSelectAllMode(elId, items, allLabel = 'All') {
     const el = $(elId);
     if (!el) return;
@@ -142,7 +137,6 @@ function renderSimpleTable(el, rows) {
   }
   function currentMonthISO(){ return normalizeMonthStr(window.__summaryMonth || ''); }
 
-  // Data Explorer table renderer
   function renderTable(el, rows, cols) {
     if (!el) return;
     if (!rows || !rows.length) {
@@ -154,28 +148,32 @@ function renderSimpleTable(el, rows) {
     el.innerHTML = thead + tbody;
   }
 
-  // ===== CATEGORY LOADERS =====
-  // DF: instant, NO MODAL
+  // ===== CATEGORY LOADERS (Direct Calls) =====
   function loadCategoriesByType_ForDF(typeValue) {
-    BBL_Helpers.fetchCategories(typeValue || '', (items) => {
-      populateSelectAllMode('dxCat', items, 'All Categories');
-    }, (err) => {
-      console.error('DF cats load failed:', err?.message || err);
-      populateSelectAllMode('dxCat', [], 'All Categories');
-    });
+    google.script.run
+      .withSuccessHandler(items => {
+        populateSelectAllMode('dxCat', items, 'All Categories');
+      })
+      .withFailureHandler(err => {
+        console.error('DF cats load failed:', err);
+        populateSelectAllMode('dxCat', [], 'All Categories');
+      })
+      .listCategoriesByType(typeValue || '');
   }
 
-  // QA: instant, NO MODAL
   function loadCategoriesByType_ForQA(typeValue) {
-    BBL_Helpers.fetchCategories(typeValue || '', (items) => {
-      populateSelectChooseMode('qaCat', items, 'Choose category');
-    }, (err) => {
-      console.error('QA cats load failed:', err?.message || err);
-      populateSelectChooseMode('qaCat', [], 'No categories');
-    });
+    google.script.run
+      .withSuccessHandler(items => {
+        populateSelectChooseMode('qaCat', items, 'Choose category');
+      })
+      .withFailureHandler(err => {
+        console.error('QA cats load failed:', err);
+        populateSelectChooseMode('qaCat', [], 'No categories');
+      })
+      .listCategoriesByType(typeValue || '');
   }
 
-  // ===== FETCHERS THAT USE MODAL (heavy) =====
+  // ===== FETCHERS =====
   function refreshBudgets(){
     const month = currentMonthISO();
     const el = $('dxBudgets'); 
@@ -230,18 +228,15 @@ function renderSimpleTable(el, rows) {
 
     google.script.run
       .withSuccessHandler(res => {
-        // 🔥 Force newest-first by DateISO (YYYY-MM-DD) before rendering
         let rows = Array.isArray(res.rows) ? res.rows.slice() : [];
         if (rows.length) {
           rows.sort((a, b) => {
             const ad = String(a.DateISO || '').trim();
             const bd = String(b.DateISO || '').trim();
-            // handle blanks sanely: blanks go to the bottom
             if (!ad && !bd) return 0;
             if (!ad) return 1;
             if (!bd) return -1;
-            // ISO dates compare correctly as strings
-            return bd.localeCompare(ad); // newest first
+            return bd.localeCompare(ad); 
           });
         }
 
@@ -267,11 +262,9 @@ function renderSimpleTable(el, rows) {
 
   // ===== BOOTSTRAP =====
   document.addEventListener('DOMContentLoaded', () => {
-    // DF Types (All Types)
     google.script.run
       .withSuccessHandler(items => {
         populateSelectAllMode('dxType', items, 'All Types');
-        // Initial DF cats = union (blank type)
         loadCategoriesByType_ForDF('');
       })
       .withFailureHandler(err => {
@@ -281,21 +274,15 @@ function renderSimpleTable(el, rows) {
       })
       .listTypes();
 
-    // DF: on type change — ONLY rebuild categories, DO NOT open modal nor auto-refresh data
     const t = $('dxType');
     if (t) t.addEventListener('change', () => {
       const typeVal = t.value || '';
       loadCategoriesByType_ForDF(typeVal);
-      // (User will hit "Refresh Transactions" when ready)
     });
 
-    // DF: Category change also should NOT open modal — wait for explicit refresh
     const c = $('dxCat');
-    if (c) c.addEventListener('change', () => {
-      // noop; user clicks Refresh when ready
-    });
+    if (c) c.addEventListener('change', () => { });
 
-    // Refresh button (brings the modal, as intended)
     const ref = $('dxRefresh');
     if (ref) ref.addEventListener('click', () => {
       const prev = ref.textContent;
@@ -314,10 +301,8 @@ function renderSimpleTable(el, rows) {
     });
   });
 })();
-</script>
 
-<script>
-/* SUMMARY → DF bridge */
+// SUMMARY → DF bridge
 document.addEventListener('summary-month-set', function(e) {
   const iso = e.detail && e.detail.month ? e.detail.month : '';
   const includeTx = e.detail && e.detail.includeTx;
@@ -333,9 +318,8 @@ document.addEventListener('summary-month-set', function(e) {
   }
   hideBusy();
 });
-</script>
 
-<script>
+// QA Handler
 (function () {
   const $ = (id) => document.getElementById(id);
   const f = $('qaForm');
@@ -356,7 +340,6 @@ document.addEventListener('summary-month-set', function(e) {
     } catch(_) {}
   }
 
-  // ---- RETRY WRAPPER (handles transient 429) ----
   function runWithRetry(fnName, args, onOk, onErr, tries=3, delay=350) {
     function attempt(remaining) {
       google.script.run
@@ -373,11 +356,9 @@ document.addEventListener('summary-month-set', function(e) {
     attempt(tries);
   }
 
-  // ---- Load QA meta once; enable button when ready ----
   setBusy(true);
   runWithRetry('getQuickAddMeta', null, (res) => {
       const meta = res || {accounts:[], types:[]};
-      // fill selects (same as you had)
       const fill = (sel, items, ph) => {
         sel.innerHTML='';
         if (ph){ const o=document.createElement('option'); o.value=''; o.textContent=ph; o.disabled=true; o.selected=true; sel.appendChild(o); }
@@ -385,14 +366,9 @@ document.addEventListener('summary-month-set', function(e) {
       };
       fill(el.type, meta.types, null);
       fill(el.acct, meta.accounts, 'Choose account');
-
-      // Defaults you want
       el.type.value = 'Expense';
       try { el.date.valueAsDate = new Date(); } catch(_) {}
-
-      // Trigger category load for default type without showing the global modal
       loadCatsFor(el.type.value, 'qaCat', false);
-
       metaLoaded = true;
       setBusy(false);
   }, (err) => {
@@ -400,8 +376,8 @@ document.addEventListener('summary-month-set', function(e) {
       alert('Failed to load Quick Add options: ' + (err?.message || err));
   });
 
-  // ---- Category loader for a given type (reuse for DF + QA) ----
   function loadCatsFor(type, targetId, useModal=true){
+    // DIRECT CALL to listCategoriesByType
     const after = (items) => {
       const target = $(targetId);
       const populate = (sel, arr, ph) => {
@@ -417,13 +393,15 @@ document.addEventListener('summary-month-set', function(e) {
     const fail = (e) => { if (useModal) hideBusy(); console.error('loadCatsFor failed', e); };
 
     if (useModal) showBusy();
-    BBL_Helpers.fetchCategories(String(type || ''), after, fail);
+    // DIRECT CALL
+    google.script.run
+      .withSuccessHandler(after)
+      .withFailureHandler(fail)
+      .listCategoriesByType(String(type || ''));
   }
 
-  // When QA Type changes, reload QA cats (no modal)
   el.type.addEventListener('change', () => loadCatsFor(el.type.value, 'qaCat', false));
 
-  // ---- Submit ----
   f.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!metaLoaded) { alert('Still loading options—one sec.'); return; }
@@ -453,59 +431,14 @@ document.addEventListener('summary-month-set', function(e) {
     });
   });
 
-  // ---- Data Filter Type change → reload DF cats (instant, no modal) ----
   const dft = $('dxType'), dfc = $('dxCat');
   if (dft && dfc) dft.addEventListener('change', () => loadCatsFor(dft.value, 'dxCat', false));
 })();
-</script>
 
-<script>
-// ---------- Summary init (keep your original simple tables empty on boot) ----------
+// Summary init
 document.addEventListener('DOMContentLoaded', function(){
   renderSimpleTable('tblActVsBud', []);
   renderSimpleTable('tblIncome', []);
   renderSimpleTable('tblExpense', []);
 });
-</script>
-
-<script>
-/* 🔒 BBL compatibility helpers — add-only, zero UX change */
-(function(){
-  function runner(){ return (google && google.script && google.script.run) || null; }
-
-  // Categories (income | expense)
-  window.BBL_Helpers = {
-    fetchCategories: function(type, onOk, onFail){
-      var r = runner(); if (!r) return (onFail && onFail('runner missing'));
-      if (typeof r.BBL_listCategoriesByType === 'function') {
-        r.withSuccessHandler(function(res){ if(res && res.ok){ onOk && onOk(res.data); } else { onFail && onFail(res); } })
-         .withFailureHandler(function(err){ onFail && onFail(err); })
-         .BBL_listCategoriesByType(type);
-      } else if (typeof r.listCategoriesByType === 'function') {
-        // fallback to your original endpoint
-        r.withSuccessHandler(function(data){ onOk && onOk(data); })
-         .withFailureHandler(function(err){ onFail && onFail(err); })
-         .listCategoriesByType(type);
-      } else {
-        onFail && onFail('No categories endpoint found');
-      }
-    },
-
-    getAccountEstimates: function(onOk, onFail){
-      var r = runner(); if (!r) return (onFail && onFail('runner missing'));
-      if (typeof r.BBL_getAccountEstimates === 'function') {
-        r.withSuccessHandler(function(res){ if(res && res.ok){ onOk && onOk(res.data); } else { onFail && onFail(res); } })
-         .withFailureHandler(function(err){ onFail && onFail(err); })
-         .BBL_getAccountEstimates();
-      } else if (typeof r.getAccountEstimates === 'function') {
-        // fallback to your original endpoint
-        r.withSuccessHandler(function(data){ onOk && onOk(data); })
-         .withFailureHandler(function(err){ onFail && onFail(err); })
-         .getAccountEstimates();
-      } else {
-        onFail && onFail('No account estimates endpoint found');
-      }
-    }
-  };
-})();
 </script>
