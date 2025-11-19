@@ -3,16 +3,17 @@
 <?!= include('styles'); ?>
 
 <style>
-
 #txViewToggle {
   display: none !important;
 }
-
-
 </style>
+
 <div class="container">
   <header class="app-header">
-    <h1>🐰 Bunny Balut Budget</h1>
+    <h1>
+      <a href="<?= BASE_URL ?>?view=landing" target="_top" rel="noopener" class="bunny-home">🐰</a>
+      Bunny Balut Budget
+    </h1>
     <div class="sub">Daddy owns you, and your budget 🐾🐾</div>
   </header>
 
@@ -22,18 +23,17 @@
   </div>
 
   <!-- Month picker bar -->
-<div class="card" id="monthBar">
-  <div class="row">
-    <strong>Pick a month, Bunny!</strong>
-    <input type="month" id="isoMonth" />
-    <button id="btnApplyMonth" class="action">Set Month</button>
-    <label class="inline" style="margin-left:8px;">
-      <input type="checkbox" id="includeTx" checked /> Include Transactions
-    </label>
-    <span id="monthStatus" class="status"></span>
+  <div class="card" id="monthBar">
+    <div class="row">
+      <strong>Pick a month, Bunny!</strong>
+      <input type="month" id="isoMonth" />
+      <button id="btnApplyMonth" class="action">Set Month</button>
+      <label class="inline" style="margin-left:8px;">
+        <input type="checkbox" id="includeTx" checked /> Include Transactions
+      </label>
+      <span id="monthStatus" class="status"></span>
+    </div>
   </div>
-</div>
-
 
   <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
     <div class="modal-panel">
@@ -48,16 +48,6 @@
       <details id="sum-section" class="panel" open>
         <summary class="table-title">Summary</summary>
 
-<!--         <div class="row">
-          <label for="isoMonth">Month</label>
-          <input type="month" id="isoMonth" />
-          <button id="btnApplyMonth" class="action">Set Month</button>
-          <label class="inline" style="margin-left:8px;">
-            <input type="checkbox" id="includeTx" checked /> Include Transactions
-          </label>
-          <span id="monthStatus" class="status"></span>
-        </div>
- -->
         <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
           <div class="summary-col">
             <h3>Actual vs Budget</h3>
@@ -79,12 +69,14 @@
   <div class="card" id="explorerCard">
     <h2>🔎 Bunny Data Explorer</h2>
 
-    <div class="row"><span id="dxMonthBadge" class="chip">Month Set: not set</span></div>
+    <div class="row">
+      <span id="dxMonthBadge" class="chip">Month Set: not set</span>
+    </div>
 
     <!-- Segmented tabs (non-sticky) -->
     <div class="seg seg-top" id="dxSeg">
-      <button class="seg-btn active" data-panel="bud">Budget</button>
-      <button class="seg-btn" data-panel="tx">Transactions</button>
+      <button class="seg-btn" data-panel="bud">Budget</button>
+      <button class="seg-btn active" data-panel="tx">Transactions</button>
       <span class="flex-spacer"></span>
       <button id="txViewToggle" class="seg-btn ghost" aria-pressed="false" title="Toggle Cards/Table">Cards</button>
     </div>
@@ -101,8 +93,8 @@
       <button id="dxRefresh" class="action">Refresh Transactions</button>
     </div>
 
-    <!-- Collapsible sections -->
-    <details class="panel" id="bud-section" open>
+    <!-- Collapsible sections: Budget above Transactions, Budget collapsed by default -->
+    <details class="panel" id="bud-section">
       <summary class="table-title">Budget</summary>
       <div id="panel-bud">
         <div class="table-wrap"><table id="dxBudgets"></table></div>
@@ -119,6 +111,8 @@
   </div>
 
   <?!= include('client'); ?>
+
+  
 </div>
 
 <!-- Sticky Explorer helper — disabled -->
@@ -141,7 +135,11 @@
   if (!card) return;
   function sizeExplorer(){
     var isDesktop = window.innerWidth >= 980;
-    if (!isDesktop){ card.style.height = ''; card.style.overflow = ''; return; }
+    if (!isDesktop){
+      card.style.height = '';
+      card.style.overflow = '';
+      return;
+    }
     var top = card.getBoundingClientRect().top;
     var h   = Math.max(window.innerHeight - top, 360);
     card.style.height = h + 'px';
@@ -158,7 +156,7 @@
 <!-- Tabs + Cards view for Transactions -->
 <script>
 (function(){
-  var seg = document.getElementById('dxSeg');
+  var seg      = document.getElementById('dxSeg');
   var panelBud = document.getElementById('panel-bud');
   var panelTx  = document.getElementById('panel-tx');
   var toggle   = document.getElementById('txViewToggle');
@@ -166,37 +164,39 @@
   var txCards  = document.getElementById('dxTxCards');
 
   if (seg && panelBud && panelTx){
-seg.addEventListener('click', function(e){
-  var b = e.target.closest('.seg-btn[data-panel]');
-  if (!b) return;
+    seg.addEventListener('click', function(e){
+      var b = e.target.closest('.seg-btn[data-panel]');
+      if (!b) return;
 
-  var isBud = b.getAttribute('data-panel') === 'bud';
-  var panel = isBud ? panelBud : panelTx;
-  var otherPanel = isBud ? panelTx : panelBud;
-  var otherBtn   = seg.querySelector('.seg-btn[data-panel="' + (isBud ? 'tx' : 'bud') + '"]');
+      var isBud      = b.getAttribute('data-panel') === 'bud';
+      var panel      = isBud ? panelBud : panelTx;
+      var otherPanel = isBud ? panelTx : panelBud;
+      var otherBtn   = seg.querySelector('.seg-btn[data-panel="' + (isBud ? 'tx' : 'bud') + '"]');
 
-  // Toggle this panel ON/OFF
-  var turningOn = panel.classList.contains('hidden');
-  if (turningOn) {
-    panel.classList.remove('hidden');
-    b.classList.add('active');
-    b.setAttribute('aria-pressed','true');
-  } else {
-    // Don’t allow BOTH to be hidden — keep at least one visible
-    if (otherPanel.classList.contains('hidden')) return;
-    panel.classList.add('hidden');
-    b.classList.remove('active');
-    b.setAttribute('aria-pressed','false');
-  }
-});
-
+      // Toggle this panel ON/OFF
+      var turningOn = panel.classList.contains('hidden');
+      if (turningOn) {
+        panel.classList.remove('hidden');
+        b.classList.add('active');
+        b.setAttribute('aria-pressed','true');
+      } else {
+        // Don’t allow BOTH to be hidden — keep at least one visible
+        if (otherPanel.classList.contains('hidden')) return;
+        panel.classList.add('hidden');
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed','false');
+      }
+    });
   }
 
   function buildCardsFromTable(){
     if (!txTable || !txCards) return;
     var thead = txTable.tHead;
     var tbody = txTable.tBodies[0];
-    if (!thead || !tbody || !thead.rows.length) { txCards.innerHTML = ''; return; }
+    if (!thead || !tbody || !thead.rows.length) {
+      txCards.innerHTML = '';
+      return;
+    }
 
     var heads = Array.from(thead.rows[0].cells).map(c => (c.textContent||'').trim().toLowerCase());
     var idx = {
@@ -232,13 +232,15 @@ seg.addEventListener('click', function(e){
       var on = toggle.getAttribute('aria-pressed') === 'true' ? false : true;
       toggle.setAttribute('aria-pressed', String(on));
       toggle.textContent = on ? 'Table' : 'Cards';
+      var wrap = txTable && txTable.closest('.table-wrap');
+
       if (on){
         buildCardsFromTable();
         txCards.classList.remove('hidden');
-        var wrap = txTable.closest('.table-wrap'); if (wrap) wrap.classList.add('hidden');
+        if (wrap) wrap.classList.add('hidden');
       }else{
         txCards.classList.add('hidden');
-        var wrap = txTable.closest('.table-wrap'); if (wrap) wrap.classList.remove('hidden');
+        if (wrap) wrap.classList.remove('hidden');
       }
     });
   }
@@ -337,12 +339,25 @@ seg.addEventListener('click', function(e){
         btn.classList.remove('busy');
 
         if (status) status.textContent = `✓ Set to ${res.b4}`;
-            
-      // NEW: auto-expand Summary panel
-        const sum = document.getElementById('sum-section');
-        if (sum) sum.open = true;
 
-        
+        const sum      = document.getElementById('sum-section');
+        const explorer = document.getElementById('explorerCard');
+        const isPhone  = window.matchMedia('(max-width: 640px), (hover:none) and (pointer:coarse)').matches;
+
+        // On tablet/desktop, open Summary; on phones, collapse it
+        if (sum) {
+          if (isPhone) {
+            sum.removeAttribute('open');   // hide Summary cards by default on phones
+          } else {
+            sum.open = true;
+          }
+        }
+
+        // On phones, after setting the month, jump the user down to Explorer
+        if (isPhone && explorer) {
+          explorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         if (typeof renderTable === 'function') {
           renderTable('tblActVsBud', res.actVsBud);
           renderTable('tblIncome',   res.income);
@@ -370,15 +385,16 @@ seg.addEventListener('click', function(e){
   });
 })();
 </script>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    if (location.hash === '#qaForm') {
-      const el = document.getElementById('qaForm');
-      if (el) { el.scrollIntoView({behavior:'smooth', block:'start'}); }
-      const amt = document.getElementById('qaAmt');
-      if (amt) { try { amt.focus(); } catch(_){} }
-    }
-  });
+document.addEventListener('DOMContentLoaded', function () {
+  if (location.hash === '#qaForm') {
+    const el = document.getElementById('qaForm');
+    if (el) { el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    const amt = document.getElementById('qaAmt');
+    if (amt) { try { amt.focus(); } catch(_){} }
+  }
+});
 </script>
 
 <!-- Sticky offset measurer -->
@@ -408,43 +424,31 @@ seg.addEventListener('click', function(e){
 })();
 </script>
 
-<!-- Desktop inner-scroll; Mobile page-scroll -->
+<!-- Explorer uses page scroll everywhere; no inner scroll wrappers -->
 <script>
 (function(){
-  function isMobile(){
-    return window.matchMedia('(max-width: 640px), (hover: none) and (pointer: coarse)').matches;
-  }
-  function sizeSectionWrap(panelId){
+  function clearSectionWrap(panelId){
     var panel = document.getElementById(panelId);
     if (!panel) return;
     var wrap = panel.querySelector('.table-wrap');
     if (!wrap) return;
 
-    if (isMobile()){
-      wrap.style.maxHeight = '';
-      wrap.style.overflow  = '';
-      wrap.style.webkitOverflowScrolling = '';
-      return;
-    }
-
-    var rect = wrap.getBoundingClientRect();
-    var avail = window.innerHeight - rect.top - 12;
-    var h = Math.max(240, Math.floor(avail));
-    wrap.style.maxHeight = h + 'px';
-    wrap.style.overflow  = 'auto';
-    wrap.style.webkitOverflowScrolling = 'touch';
+    // Remove any JS-set sizing/overflow so the page scrolls normally
+    wrap.style.maxHeight = '';
+    wrap.style.overflow  = '';
+    wrap.style.webkitOverflowScrolling = '';
   }
-  function sizeAll(){
-    sizeSectionWrap('panel-bud');
-    sizeSectionWrap('panel-tx');
+  function clearAll(){
+    clearSectionWrap('panel-bud');
+    clearSectionWrap('panel-tx');
   }
-  sizeAll();
-  window.addEventListener('resize', sizeAll, {passive:true});
-  window.addEventListener('orientationchange', sizeAll, {passive:true});
-  document.addEventListener('DOMContentLoaded', sizeAll);
-  window.addEventListener('load', sizeAll);
-  document.addEventListener('summary-month-set', sizeAll);
-  document.addEventListener('dx-refresh-complete', sizeAll);
+  clearAll();
+  window.addEventListener('resize', clearAll, {passive:true});
+  window.addEventListener('orientationchange', clearAll, {passive:true});
+  document.addEventListener('DOMContentLoaded', clearAll);
+  window.addEventListener('load', clearAll);
+  document.addEventListener('summary-month-set', clearAll);
+  document.addEventListener('dx-refresh-complete', clearAll);
 })();
 </script>
 
@@ -485,7 +489,9 @@ seg.addEventListener('click', function(e){
   // Collapse Summary on phones by default + show jump chip
   const sum = document.getElementById('sum-section');
   const jump = document.getElementById('jumpExplorer');
-  function isPhone(){ return window.matchMedia('(max-width: 640px), (hover:none) and (pointer:coarse)').matches; }
+  function isPhone(){
+    return window.matchMedia('(max-width: 640px), (hover:none) and (pointer:coarse)').matches;
+  }
   function applyMobileSummary(){
     if (!sum || !jump) return;
     if (isPhone()){
@@ -501,3 +507,70 @@ seg.addEventListener('click', function(e){
   window.addEventListener('orientationchange', applyMobileSummary, {passive:true});
 })();
 </script>
+
+<!-- BBB_TX_SORT_DOM — always keep Transactions sorted by Date DESC -->
+<script>
+(function(){
+  function sortTxTable(){
+    var table = document.getElementById('dxTx');
+    if (!table || !table.tBodies || !table.tBodies.length) return;
+
+    var tbody = table.tBodies[0];
+    var rows  = Array.from(tbody.rows || []);
+    if (!rows.length) return;
+
+    // Find Date column index from header; fallback to first column
+    var dateIdx = 0;
+    var thead   = table.tHead;
+    if (thead && thead.rows && thead.rows.length){
+      var cells = Array.from(thead.rows[0].cells || []);
+      var idx   = cells.findIndex(function(c){
+        return /date/i.test((c.textContent || '').trim());
+      });
+      if (idx >= 0) dateIdx = idx;
+    }
+
+    rows.sort(function(a, b){
+      var aText = (a.cells[dateIdx] && a.cells[dateIdx].textContent || '').trim();
+      var bText = (b.cells[dateIdx] && b.cells[dateIdx].textContent || '').trim();
+
+      // Expecting yyyy-mm-dd; if parse fails, leave order
+      var aDate = new Date(aText);
+      var bDate = new Date(bText);
+      if (isNaN(aDate) || isNaN(bDate)) return 0;
+
+      return bDate - aDate; // newest first
+    });
+
+    // Re-append in sorted order
+    rows.forEach(function(r){ tbody.appendChild(r); });
+  }
+
+  function initTxSortObserver(){
+    var table = document.getElementById('dxTx');
+    if (!table || !table.tBodies || !table.tBodies.length) return;
+
+    var tbody = table.tBodies[0];
+
+    // Initial sort
+    sortTxTable();
+
+    // Observe future changes and re-sort
+    var timeoutId = null;
+    var observer = new MutationObserver(function(){
+      // debounce in case of batch updates
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(sortTxTable, 50);
+    });
+
+    observer.observe(tbody, { childList: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTxSortObserver);
+  } else {
+    initTxSortObserver();
+  }
+})();
+</script>
+

@@ -141,29 +141,22 @@ function renderSimpleTable(el, rows) {
   // ===== CATEGORY LOADERS =====
   // DF: instant, NO MODAL
   function loadCategoriesByType_ForDF(typeValue) {
-    google.script.run
-      .withSuccessHandler(items => {
-        populateSelectAllMode('dxCat', items, 'All Categories');
-      })
-      .withFailureHandler(err => {
-        console.error('DF cats load failed:', err?.message || err);
-        populateSelectAllMode('dxCat', [], 'All Categories');
-      })
-      .listCategoriesByType(typeValue || '');
+    BBL_Helpers.fetchCategories(typeValue || '', (items) => {
+      populateSelectAllMode('dxCat', items, 'All Categories');
+    }, (err) => {
+      console.error('DF cats load failed:', err?.message || err);
+      populateSelectAllMode('dxCat', [], 'All Categories');
+    });
   }
 
   // QA: instant, NO MODAL
   function loadCategoriesByType_ForQA(typeValue) {
-    google.script.run
-      .withSuccessHandler(items => {
-        // For Transfer, listCategoriesByType returns accounts; that's intended.
-        populateSelectChooseMode('qaCat', items, 'Choose category');
-      })
-      .withFailureHandler(err => {
-        console.error('QA cats load failed:', err?.message || err);
-        populateSelectChooseMode('qaCat', [], 'No categories');
-      })
-      .listCategoriesByType(typeValue || '');
+    BBL_Helpers.fetchCategories(typeValue || '', (items) => {
+      populateSelectChooseMode('qaCat', items, 'Choose category');
+    }, (err) => {
+      console.error('QA cats load failed:', err?.message || err);
+      populateSelectChooseMode('qaCat', [], 'No categories');
+    });
   }
 
   // ===== FETCHERS THAT USE MODAL (heavy) =====
@@ -221,7 +214,22 @@ function renderSimpleTable(el, rows) {
 
     google.script.run
       .withSuccessHandler(res => {
-        renderTable(el, res.rows, [
+        // 🔥 Force newest-first by DateISO (YYYY-MM-DD) before rendering
+        let rows = Array.isArray(res.rows) ? res.rows.slice() : [];
+        if (rows.length) {
+          rows.sort((a, b) => {
+            const ad = String(a.DateISO || '').trim();
+            const bd = String(b.DateISO || '').trim();
+            // handle blanks sanely: blanks go to the bottom
+            if (!ad && !bd) return 0;
+            if (!ad) return 1;
+            if (!bd) return -1;
+            // ISO dates compare correctly as strings
+            return bd.localeCompare(ad); // newest first
+          });
+        }
+
+        renderTable(el, rows, [
           {key:'DateISO',label:'Date'},{key:'Account',label:'Account'},
           {key:'Type',label:'Type'},{key:'Category',label:'Category'},
           {key:'Amount',label:'Amount'},{key:'Description',label:'Description'}
@@ -317,7 +325,7 @@ document.addEventListener('summary-month-set', function(e) {
   const f = $('qaForm');
   if (!f) return;
 
-  let metaLoaded = false;               // <-- add this
+  let metaLoaded = false;
   const el = {
     date: $('qaDate'), type: $('qaType'), cat: $('qaCat'),
     amt: $('qaAmt'),  acct: $('qaAcct'), desc: $('qaDesc'),
@@ -326,7 +334,7 @@ document.addEventListener('summary-month-set', function(e) {
 
   function setBusy(on) {
     try {
-      el.btn.disabled = on || !metaLoaded;    // <-- respect metaLoaded
+      el.btn.disabled = on || !metaLoaded;
       if (on) { el.btn.classList.add('busy'); showBusy(); }
       else { el.btn.classList.remove('busy'); hideBusy(); }
     } catch(_) {}
@@ -369,7 +377,7 @@ document.addEventListener('summary-month-set', function(e) {
       // Trigger category load for default type without showing the global modal
       loadCatsFor(el.type.value, 'qaCat', false);
 
-      metaLoaded = true;               // <-- now safe to submit
+      metaLoaded = true;
       setBusy(false);
   }, (err) => {
       setBusy(false);
@@ -378,25 +386,22 @@ document.addEventListener('summary-month-set', function(e) {
 
   // ---- Category loader for a given type (reuse for DF + QA) ----
   function loadCatsFor(type, targetId, useModal=true){
-    const go = () => runWithRetry(
-      'listCategoriesByType', String(type || ''),
-      (items) => {
-        const target = $(targetId);
-        const populate = (sel, arr, ph) => {
-          sel.innerHTML='';
-          if (ph){ const o=document.createElement('option'); o.value=''; o.textContent=ph; sel.appendChild(o); }
-          (arr||[]).forEach(v=>{ const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
-        };
-        const ph = (targetId === 'dxCat') ? '— All Categories —' : 'Choose category';
-        populate(target, items, ph);
-        if (targetId === 'qaCat' && items && items.length) target.value = items[0];
-        if (useModal) hideBusy();
-      },
-      (e) => { if (useModal) hideBusy(); console.error('loadCatsFor failed', e); }
-    );
+    const after = (items) => {
+      const target = $(targetId);
+      const populate = (sel, arr, ph) => {
+        sel.innerHTML='';
+        if (ph){ const o=document.createElement('option'); o.value=''; o.textContent=ph; o.disabled=true; o.selected=true; sel.appendChild(o); }
+        (arr||[]).forEach(v=>{ const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
+      };
+      const ph = (targetId === 'dxCat') ? '— All Categories —' : 'Choose category';
+      populate(target, items, ph);
+      if (targetId === 'qaCat' && items && items.length) target.value = items[0];
+      if (useModal) hideBusy();
+    };
+    const fail = (e) => { if (useModal) hideBusy(); console.error('loadCatsFor failed', e); };
 
     if (useModal) showBusy();
-    go();
+    BBL_Helpers.fetchCategories(String(type || ''), after, fail);
   }
 
   // When QA Type changes, reload QA cats (no modal)
@@ -438,7 +443,6 @@ document.addEventListener('summary-month-set', function(e) {
 })();
 </script>
 
-
 <script>
 // ---------- Summary init (keep your original simple tables empty on boot) ----------
 document.addEventListener('DOMContentLoaded', function(){
@@ -446,4 +450,46 @@ document.addEventListener('DOMContentLoaded', function(){
   renderSimpleTable('tblIncome', []);
   renderSimpleTable('tblExpense', []);
 });
+</script>
+
+<script>
+/* 🔒 BBL compatibility helpers — add-only, zero UX change */
+(function(){
+  function runner(){ return (google && google.script && google.script.run) || null; }
+
+  // Categories (income | expense)
+  window.BBL_Helpers = {
+    fetchCategories: function(type, onOk, onFail){
+      var r = runner(); if (!r) return (onFail && onFail('runner missing'));
+      if (typeof r.BBL_listCategoriesByType === 'function') {
+        r.withSuccessHandler(function(res){ if(res && res.ok){ onOk && onOk(res.data); } else { onFail && onFail(res); } })
+         .withFailureHandler(function(err){ onFail && onFail(err); })
+         .BBL_listCategoriesByType(type);
+      } else if (typeof r.listCategoriesByType === 'function') {
+        // fallback to your original endpoint
+        r.withSuccessHandler(function(data){ onOk && onOk(data); })
+         .withFailureHandler(function(err){ onFail && onFail(err); })
+         .listCategoriesByType(type);
+      } else {
+        onFail && onFail('No categories endpoint found');
+      }
+    },
+
+    getAccountEstimates: function(onOk, onFail){
+      var r = runner(); if (!r) return (onFail && onFail('runner missing'));
+      if (typeof r.BBL_getAccountEstimates === 'function') {
+        r.withSuccessHandler(function(res){ if(res && res.ok){ onOk && onOk(res.data); } else { onFail && onFail(res); } })
+         .withFailureHandler(function(err){ onFail && onFail(err); })
+         .BBL_getAccountEstimates();
+      } else if (typeof r.getAccountEstimates === 'function') {
+        // fallback to your original endpoint
+        r.withSuccessHandler(function(data){ onOk && onOk(data); })
+         .withFailureHandler(function(err){ onFail && onFail(err); })
+         .getAccountEstimates();
+      } else {
+        onFail && onFail('No account estimates endpoint found');
+      }
+    }
+  };
+})();
 </script>

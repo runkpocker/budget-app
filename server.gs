@@ -5,7 +5,7 @@ const SPREADSHEET_ID = '1-KZorvFCZi-Ic7a54hx4p2s0fqM6LHt_wVcSQkxAS6c';
 function getWebAppBaseUrl() {
   var url = ScriptApp.getService().getUrl();
   if (!url) throw new Error('This script is not deployed as a web app.');
-  return url; // e.g. https://script.google.com/macros/s/.../dev
+  return url;
 }
 
 // Convenience: base + ?view=...
@@ -15,16 +15,15 @@ function getWebAppUrl(view) {
   return base + (base.indexOf('?') > -1 ? '&' : '?') + 'view=' + encodeURIComponent(v);
 }
 
-
 function doGet(e) {
   try {
     var view = (e && e.parameter && e.parameter.view) || 'landing';
     var file = (view === 'index') ? 'index' : 'landing';
-
-    // 👇 Inject the canonical deployment URL (script.google.com/macros/.../dev or /exec)
+    
+    // Inject the canonical deployment URL
     var t = HtmlService.createTemplateFromFile(file);
     t.BASE_URL = ScriptApp.getService().getUrl();
-
+    
     return t
       .evaluate()
       .setTitle('Bunny Balut Budget')
@@ -36,14 +35,16 @@ function doGet(e) {
   }
 }
 
-
 // HTML include helper
 function include(name) {
   return HtmlService.createHtmlOutputFromFile(name).getContent();
 }
 
 // Spreadsheet helpers
-function _ss() { return SpreadsheetApp.openById(SPREADSHEET_ID); }
+function _ss() { 
+  // Optimization: If container-bound, you could use SpreadsheetApp.getActiveSpreadsheet();
+  return SpreadsheetApp.openById(SPREADSHEET_ID); 
+}
 
 function _safeNamed(name) {
   try {
@@ -100,6 +101,7 @@ function _catsFromCategoriesSheet(kind /* 'income' | 'expense' */) {
   const typeIdx = header.indexOf('type');
   const catIdx  = header.indexOf('category');
   if (typeIdx < 0 || catIdx < 0) return [];
+  
   const out = [];
   const rows = sh.getRange(2,1,lastRow-1,lastCol).getValues();
   for (const r of rows) {
@@ -117,15 +119,9 @@ function _accountsFromSheet() {
   return n ? _uniqClean(sh.getRange(2,1,n,1).getValues()) : [];
 }
 
-/** === MAIN: categories per Type with discovery ===
- *  - Income:   look for Income category named ranges (many common spellings)
- *  - Expense:  same
- *  - Transfer: try account lists by name; else Accounts sheet
- *  - Blank:    union Income+Expense
- */
+/** === MAIN: categories per Type with discovery === */
 function listCategoriesByType(type) {
   const t = String(type || '').trim().toLowerCase();
-
   if (t === 'transfer') {
     const accounts = _resolveNamedValues(
       [
@@ -158,34 +154,6 @@ function listCategoriesByType(type) {
   return _uniqClean([inc, exp]);
 }
 
-
-/** Fallback: derive categories by scanning the Categories sheet (Type, Category) */
-function deriveCatsFromSheet_() {
-  const ss  = _ss();
-  const sh  = ss.getSheetByName('Categories');
-  if (!sh) return { income: [], expense: [] };
-
-  const lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
-  if (lastRow < 2 || lastCol < 2) return { income: [], expense: [] };
-
-  const header = (sh.getRange(1,1,1,lastCol).getValues()[0] || []).map(String);
-  const typeIdx = header.findIndex(h => h.trim().toLowerCase() === 'type');
-  const catIdx  = header.findIndex(h => h.trim().toLowerCase() === 'category');
-  if (typeIdx < 0 || catIdx < 0) return { income: [], expense: [] };
-
-  const rows = sh.getRange(2,1,lastRow-1,lastCol).getValues();
-  const inc = [], exp = [];
-  for (const r of rows) {
-    const t = String(r[typeIdx] || '').trim().toLowerCase();
-    const c = String(r[catIdx]  || '').trim();
-    if (!c) continue;
-    if (t === 'income')  inc.push(c);
-    if (t === 'expense') exp.push(c);
-  }
-  const uniq = (arr) => Array.from(new Set(arr)).sort();
-  return { income: uniq(inc), expense: uniq(exp) };
-}
-
 // --- Month picker endpoint that RESPECTS Summary!B4 data validation ---
 function setSummaryMonthFromIso(isoYYYYMM) {
   if (!/^\d{4}-\d{2}$/.test(String(isoYYYYMM || ''))) {
@@ -200,7 +168,7 @@ function setSummaryMonthFromIso(isoYYYYMM) {
 
   const b4 = sh.getRange('B4');
   const dv = b4.getDataValidation();
-
+  
   const monthKey = (v) => {
     if (v instanceof Date && !isNaN(v)) {
       return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2,'0')}`;
@@ -224,39 +192,36 @@ function setSummaryMonthFromIso(isoYYYYMM) {
   if (dv) {
     const type = dv.getCriteriaType();
     const args = dv.getCriteriaValues();
+    
+    // Helper to check against list or range
+    const checkList = (list) => {
+      for (let i = 0; i < list.length; i++) {
+        // list[i] might be an array [val] or just val
+        const val = Array.isArray(list[i]) ? list[i][0] : list[i];
+        if (monthKey(val) === targetKey) {
+          b4.setValue(val);
+          return true;
+        }
+      }
+      return false;
+    };
+
     if (type === SpreadsheetApp.DataValidationCriteria.VALUE_IN_RANGE) {
       const rng = args[0];
       if (rng) {
-        const vals = rng.getValues();
-        const disps = rng.getDisplayValues();
-        for (let i = 0; i < vals.length; i++) {
-          if (monthKey(vals[i][0]) === targetKey) {
-            b4.setValue(vals[i][0]);
-            return _returnSummary_(b4);
-          }
-        }
-        for (let i = 0; i < disps.length; i++) {
-          if (monthKey(disps[i][0]) === targetKey) {
-            b4.setValue(vals[i][0]);
-            return _returnSummary_(b4);
-          }
-        }
+        if (checkList(rng.getValues())) return _returnSummary_(b4);
+        if (checkList(rng.getDisplayValues())) return _returnSummary_(b4);
       }
       throw new Error(`Selected month (${isoYYYYMM}) is not in the allowed list for Summary!B4`);
     }
 
     if (type === SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST) {
-      const list = (args[0] || []).map(String);
-      for (const s of list) {
-        if (monthKey(s) === targetKey) {
-          b4.setValue(s);
-          return _returnSummary_(b4);
-        }
-      }
+      if (checkList(args[0] || [])) return _returnSummary_(b4);
       throw new Error(`Selected month (${isoYYYYMM}) is not in the allowed list for Summary!B4`);
     }
   }
 
+  // Fallback if no validation or validation passed manually
   b4.setValue(new Date(y, m - 1, 1, 12, 0, 0, 0));
   return _returnSummary_(b4);
 }
@@ -267,30 +232,6 @@ function _returnSummary_(b4Range) {
   const inc      = _safeNamed('IncActVsBud');
   const exp      = _safeNamed('ExpActVsBud');
   return { b4: b4Range.getDisplayValue(), actVsBud, income: inc, expense: exp };
-}
-
-function getCurrentMonthIso() {
-  const sh = _ss().getSheetByName('Summary');
-  if (!sh) return { iso: '' };
-  const raw = sh.getRange('B4').getValue();
-  const disp = sh.getRange('B4').getDisplayValue();
-  const toIso = (v) => {
-    if (v instanceof Date && !isNaN(v)) {
-      return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2,'0')}`;
-    }
-    const t = String(v || '').trim();
-    if (/^\d{4}-\d{2}$/.test(t)) return t;
-    let m = t.match(/^(\d{4})[-\/\. ](\d{1,2})$/);
-    if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}`;
-    m = t.match(/^([A-Za-z]+)\s+(\d{4})$/);
-    if (m) {
-      const names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-      const idx = names.indexOf(m[1].slice(0,3).toLowerCase());
-      if (idx >= 0) return `${m[2]}-${String(idx + 1).padStart(2,'0')}`;
-    }
-    return '';
-  };
-  return { iso: toIso(raw) || toIso(disp) || '' };
 }
 
 /***** === Data Explorer API === *****/
@@ -328,7 +269,7 @@ function asYYYYMM_(v) {
 }
 
 function listTypes() {
-  return ['Income', 'Expense', 'Transfer']; // order matters for your defaults
+  return ['Income', 'Expense', 'Transfer']; 
 }
 
 function getBudgetView(args) {
@@ -338,6 +279,7 @@ function getBudgetView(args) {
   const headers = Object.keys(rows[0] || {});
   const missing = BUDGET_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Budget sheet missing headers: ' + missing.join(', '));
+  
   const mapped = rows.map(r => {
     const budgetStr = String(r.Budget || '').replace(/,/g, '');
     return {
@@ -366,6 +308,7 @@ function getTransactionView(args) {
   const headers = Object.keys(rows[0] || {});
   const missing = TX_HEADERS.filter(h => headers.indexOf(h) < 0);
   if (missing.length) throw new Error('Transactions sheet missing headers: ' + missing.join(', '));
+  
   const normalized = rows.map(r => {
     let yyyy = '1970', mm = '01', dd = '01', yyyymm = '1970-01';
     let d = r.Date;
@@ -402,46 +345,28 @@ function getTransactionView(args) {
       Description: String(r.Description || r.Note || '')
     };
   });
+  
   const filtered = normalized.filter(r =>
     (!month || r.Month === month) &&
     (!type || r.Type === type) &&
     (!category || r.Category === category) &&
     r.DateISO && r.Account && r.Amount !== null
   );
+  
   const total = filtered.length;
   const start = (page - 1) * pageSize;
   const slice = filtered.slice(start, start + pageSize);
   return { rows: slice, page, pageSize, total, pages: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
-function normalizeBudgetMonthCell_(v) {
-  const tz = _ss().getSpreadsheetTimeZone();
-  if (v instanceof Date) return Utilities.formatDate(v, tz, 'yyyy-MM');
-  const s = String(v || '').trim();
-  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (m) {
-    const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-    return Utilities.formatDate(d, tz, 'yyyy-MM');
-  }
-  m = s.match(/^([A-Za-z]+)[\s\-]+(\d{4})$/);
-  if (m) {
-    const names = ['january','february','march','april','may','june','july','august','september','october','november','december'];
-    const token = m[1].toLowerCase().replace(/\./g,'');
-    let idx = names.indexOf(token);
-    if (idx < 0) idx = names.map(n => n.slice(0,3)).indexOf(token.slice(0,3));
-    if (idx >= 0) {
-      const d = new Date(Number(m[2]), idx, 1);
-      return Utilities.formatDate(d, tz, 'yyyy-MM');
-    }
-  }
-  const d2 = new Date(s);
-  return isNaN(d2) ? '' : Utilities.formatDate(d2, tz, 'yyyy-MM');
-}
-
 /** Utility: A1 helpers */
 function colToA1(col){
   let s = "";
-  while (col > 0) { let m = (col - 1) % 26; s = String.fromCharCode(65 + m) + s; col = (col - m - 1) / 26; }
+  while (col > 0) { 
+    let m = (col - 1) % 26; 
+    s = String.fromCharCode(65 + m) + s;
+    col = (col - m - 1) / 26; 
+  }
   return s;
 }
 
@@ -453,7 +378,7 @@ function inspectTransactionsSheet(){
 
   const lastCol = sh.getLastColumn();
   if (lastCol < 1) throw new Error('Transactions sheet has no columns');
-
+  
   const headers  = (sh.getRange(1, 1, 1, lastCol).getValues()[0] || []).map(v => String(v || '').trim());
   const tmplRow  = 2;
   const formulas = sh.getRange(tmplRow, 1, 1, lastCol).getFormulas()[0];
@@ -465,6 +390,7 @@ function inspectTransactionsSheet(){
     const formula = formulas[c - 1] || '';
     let hidden = false;
     try { hidden = sh.isColumnHiddenByUser(c); } catch (_) {}
+    
     cols.push({
       index: c,
       letter: colToA1(c),
@@ -490,12 +416,11 @@ function getQuickAddMeta(){
   const ss   = _ss();
   const accts= ss.getSheetByName('Accounts');
   if (!accts) throw new Error('Missing "Accounts" sheet');
-
+  
   const accounts = (accts.getRange(2,1,Math.max(0, accts.getLastRow()-1), 1).getValues() || [])
     .map(r => String(r[0] || '').trim())
     .filter(Boolean);
-
-  const types = listTypes(); // ['Income','Expense','Transfer']
+  const types = listTypes(); 
   return { accounts, types };
 }
 
@@ -507,35 +432,34 @@ function parseLocalDate_(yyyy_mm_dd) {
   return new Date(y, m - 1, d); // local midnight in project timezone
 }
 
-
 /** SAFETY-FIRST Quick Add **/
 function quickAddTransaction(payload) {
   const ss = _ss();
   const sh = ss.getSheetByName('Transactions');
   if (!sh) throw new Error('Missing "Transactions" sheet');
 
-  const meta = inspectTransactionsSheet();       // has header map + which cols are formula
+  const meta = inspectTransactionsSheet();
   const lastCol = meta.lastCol;
-  const tmplRow = meta.templateRow || 2;         // template row is row 2
+  const tmplRow = meta.templateRow || 2;
 
   // --- Validate inputs
-const d = parseLocalDate_(payload.date);
-  if (isNaN(d)) throw new Error('Invalid date');
-
+  const d = parseLocalDate_(payload.date);
+  if (isNaN(d)) throw new Error('Invalid date'); // 'd' is used for validation only
   const type = String(payload.type || '').trim();
   const cat  = String(payload.category || '').trim();
   const acct = String(payload.account || '').trim();
   const desc = String(payload.description || '').trim();
   const amt  = Number(String(payload.amount || '').replace(/,/g, ''));
+  
   if (!type || !cat || !acct || !Number.isFinite(amt)) {
     throw new Error('Missing required fields');
   }
 
   // --- 1) Snapshot the TEMPLATE FORMULAS BEFORE we shift anything
-  const tmplFormulas = sh.getRange(tmplRow, 1, 1, lastCol).getFormulas()[0]; // array of strings ('' if no formula)
+  const tmplFormulas = sh.getRange(tmplRow, 1, 1, lastCol).getFormulas()[0];
 
   // --- 2) Insert a NEW ROW at row 2 so the new record becomes row 2
-  sh.insertRowsBefore(tmplRow, 1);               // new row is now at row 2; old template moved to row 3
+  sh.insertRowsBefore(tmplRow, 1);
 
   // --- 3) Copy ONLY format + data validation from the (shifted) old template (now row 3) to the new row 2
   sh.getRange(tmplRow + 1, 1, 1, lastCol).copyTo(
@@ -543,7 +467,7 @@ const d = parseLocalDate_(payload.date);
     { formatOnly: true }
   );
 
-  // --- 4) Restore the template formulas into the new row 2 (exactly the same formulas as template)
+  // --- 4) Restore the template formulas into the new row 2
   for (let c = 1; c <= lastCol; c++) {
     const f = tmplFormulas[c - 1] || '';
     if (f) {
@@ -558,27 +482,27 @@ const d = parseLocalDate_(payload.date);
   // --- Helper: write to an input column ONLY (skip formula columns)
   const safeWrite = (header, value) => {
     const col = byHeader[header];
-    if (!col) return;                                    // header missing
+    if (!col) return;
     const colMeta = meta.columns[col - 1];
-    if (colMeta.hasFormulaInTemplate) return;            // DO NOT touch formula cols
+    if (colMeta.hasFormulaInTemplate) return; // DO NOT touch formula cols
     sh.getRange(tmplRow, col).setValue(value);
   };
 
-  // --- 5) Fill inputs (Date, Account, Type, Category, Amount, Description)
-  safeWrite('Date',        d);
+  // --- 5) Fill inputs
+  // FIX: Write the date as a simple String (YYYY-MM-DD) to prevent timezone shifting.
+  // Since 'd' was created in the Script Timezone, formatting it back to string in the same timezone preserves the input.
+  safeWrite('Date',        Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'));
+  
   safeWrite('Account',     acct);
   safeWrite('Type',        type);
   safeWrite('Category',    cat);
   safeWrite('Amount',      amt);
   safeWrite('Description', desc);
 
-  // Done. New record is row 2, all hidden/formula columns intact.
   return { ok: true, row: tmplRow };
 }
 
-
-
-/***** DEBUG (optional) *****/
+/** Debug Helper */
 function quickAddDiagnostics(){
   const meta = inspectTransactionsSheet();
   return {
