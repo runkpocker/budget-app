@@ -1,11 +1,16 @@
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
 <?!= include('styles'); ?>
 
 <style>
-#txViewToggle {
-  display: none !important;
-}
+  /* Tiny hint style for the summary header */
+  .summary-hint {
+    font-weight: normal;
+    font-size: 0.85rem;
+    opacity: 0.6;
+    margin-left: 8px;
+    font-style: italic;
+  }
 </style>
 
 <div class="container">
@@ -33,6 +38,21 @@
     </div>
   </div>
 
+  <div class="kpi-grid" id="kpiHero">
+    <div class="kpi-card income">
+      <div class="kpi-label">Income (Actual)</div>
+      <div class="kpi-value" id="kpiIncome">--</div>
+    </div>
+    <div class="kpi-card expense">
+      <div class="kpi-label">Spent (Actual)</div>
+      <div class="kpi-value" id="kpiExpense">--</div>
+    </div>
+    <div class="kpi-card net">
+      <div class="kpi-label">Net (Actual)</div>
+      <div class="kpi-value" id="kpiNet">--</div>
+    </div>
+  </div>
+
   <div id="busyModal" class="modal hidden" role="dialog" aria-modal="true" aria-live="polite">
     <div class="modal-panel">
       <div class="bunny" aria-hidden="true">🐰</div>
@@ -42,8 +62,11 @@
 
   <section class="cards">
     <div class="card">
-      <details id="sum-section" class="panel" open>
-        <summary class="table-title">Summary</summary>
+      <details id="sum-section" class="panel">
+        <summary class="table-title">
+          Summary Details 
+          <span class="summary-hint">(click to expand)</span>
+        </summary>
 
         <div id="summaryArea" class="summary-flex-final" style="margin-top:10px">
           <div class="summary-col">
@@ -68,13 +91,6 @@
 
     <div class="row">
       <span id="dxMonthBadge" class="chip">Month Set: not set</span>
-    </div>
-
-    <div class="seg seg-top" id="dxSeg">
-      <button class="seg-btn" data-panel="bud">Budget</button>
-      <button class="seg-btn active" data-panel="tx">Transactions</button>
-      <span class="flex-spacer"></span>
-      <button id="txViewToggle" class="seg-btn ghost" aria-pressed="false" title="Toggle Cards/Table">Cards</button>
     </div>
 
     <h3>Data Filters</h3>
@@ -107,7 +123,6 @@
 
   <?!= include('client'); ?>
 
-  
 </div>
 
 <script>
@@ -135,110 +150,6 @@
 </script>
 
 <script>
-(function(){
-  var seg      = document.getElementById('dxSeg');
-  var panelBud = document.getElementById('panel-bud');
-  var panelTx  = document.getElementById('panel-tx');
-  var toggle   = document.getElementById('txViewToggle');
-  var txTable  = document.getElementById('dxTx');
-  var txCards  = document.getElementById('dxTxCards');
-
-  if (seg && panelBud && panelTx){
-    seg.addEventListener('click', function(e){
-      var b = e.target.closest('.seg-btn[data-panel]');
-      if (!b) return;
-
-      var isBud      = b.getAttribute('data-panel') === 'bud';
-      var panel      = isBud ? panelBud : panelTx;
-      var otherPanel = isBud ? panelTx : panelBud;
-      var otherBtn   = seg.querySelector('.seg-btn[data-panel="' + (isBud ? 'tx' : 'bud') + '"]');
-
-      // Toggle this panel ON/OFF
-      var turningOn = panel.classList.contains('hidden');
-      if (turningOn) {
-        panel.classList.remove('hidden');
-        b.classList.add('active');
-        b.setAttribute('aria-pressed','true');
-      } else {
-        // Don’t allow BOTH to be hidden — keep at least one visible
-        if (otherPanel.classList.contains('hidden')) return;
-        panel.classList.add('hidden');
-        b.classList.remove('active');
-        b.setAttribute('aria-pressed','false');
-      }
-    });
-  }
-
-  function buildCardsFromTable(){
-    if (!txTable || !txCards) return;
-    var thead = txTable.tHead;
-    var tbody = txTable.tBodies[0];
-    if (!thead || !tbody || !thead.rows.length) {
-      txCards.innerHTML = '';
-      return;
-    }
-
-    var heads = Array.from(thead.rows[0].cells).map(c => (c.textContent||'').trim().toLowerCase());
-    var idx = {
-      date:      heads.findIndex(h => /date/.test(h)),
-      type:      heads.findIndex(h => /^type$/.test(h)),
-      category:  heads.findIndex(h => /category/.test(h)),
-      amount:    heads.findIndex(h => /amount/.test(h))
-    };
-
-    txCards.innerHTML = '';
-    Array.from(tbody.rows).forEach(function(r){
-      var d = (idx.date>=0 && r.cells[idx.date]) ? r.cells[idx.date].textContent.trim() : '';
-      var t = (idx.type>=0 && r.cells[idx.type]) ? r.cells[idx.type].textContent.trim() : '';
-      var c = (idx.category>=0 && r.cells[idx.category]) ? r.cells[idx.category].textContent.trim() : '';
-      var a = (idx.amount>=0 && r.cells[idx.amount]) ? r.cells[idx.amount].textContent.trim() : '';
-
-      var card = document.createElement('div');
-      card.className = 'tx-card ' + ((/income/i.test(t)) ? 'income' : (/expense/i.test(t) ? 'expense' : ''));
-      var main = document.createElement('div'); main.className='tx-main'; main.textContent = c || t || '—';
-      var sub  = document.createElement('div'); sub.className='tx-sub';  sub.textContent = d + (t ? ' · ' + t : '');
-      var amt  = document.createElement('div'); amt.className='tx-amt';  amt.textContent = a || '';
-
-      card.appendChild(main);
-      card.appendChild(amt);
-      card.appendChild(sub);
-
-      txCards.appendChild(card);
-    });
-  }
-
-  if (toggle && panelTx){
-    toggle.addEventListener('click', function(){
-      var on = toggle.getAttribute('aria-pressed') === 'true' ? false : true;
-      toggle.setAttribute('aria-pressed', String(on));
-      toggle.textContent = on ? 'Table' : 'Cards';
-      var wrap = txTable && txTable.closest('.table-wrap');
-
-      if (on){
-        buildCardsFromTable();
-        txCards.classList.remove('hidden');
-        if (wrap) wrap.classList.add('hidden');
-      }else{
-        txCards.classList.add('hidden');
-        if (wrap) wrap.classList.remove('hidden');
-      }
-    });
-  }
-
-  document.addEventListener('summary-month-set', function(){
-    if (toggle && toggle.getAttribute('aria-pressed') === 'true'){
-      setTimeout(buildCardsFromTable, 250);
-    }
-  });
-  document.addEventListener('dx-refresh-complete', function(){
-    if (toggle && toggle.getAttribute('aria-pressed') === 'true'){
-      setTimeout(buildCardsFromTable, 150);
-    }
-  });
-})();
-</script>
-
-<script>
 (function () {
   const $ = (id) => document.getElementById(id);
 
@@ -253,6 +164,30 @@
     const mm = String(iMonth.value || '').padStart(2, '0');
     const yyyy = new Date().getFullYear();
     return mm ? `${yyyy}-${mm}` : '';
+  }
+  
+  // Logic to capture ACTUALS only
+  function updateKPIs(rows) {
+    if (!rows || !rows.length) return;
+    
+    $('kpiIncome').textContent = '--';
+    $('kpiExpense').textContent = '--';
+    $('kpiNet').textContent = '--';
+
+    rows.forEach(row => {
+      const label = String(row[0] || '').toLowerCase();
+      const val = row[1]; 
+      
+      if (label.includes('income') && label.includes('actual')) {
+         $('kpiIncome').textContent = val;
+      }
+      if (label.includes('expenses') && label.includes('actual')) {
+         $('kpiExpense').textContent = val;
+      }
+      if ((label.includes('net') || label.includes('difference')) && label.includes('actual')) {
+         $('kpiNet').textContent = val;
+      }
+    });
   }
 
   btn.addEventListener('click', () => {
@@ -272,25 +207,22 @@
         btn.classList.remove('busy');
 
         if (status) status.textContent = `✓ Set to ${res.b4}`;
+        
+        // 1. Update KPI Cards
+        if (res.actVsBud) updateKPIs(res.actVsBud);
 
-        const sum      = document.getElementById('sum-section');
+        // 2. COLLAPSE SUMMARY BY DEFAULT
+        const sum = document.getElementById('sum-section');
+        if (sum) {
+          sum.removeAttribute('open'); // Always close it so user sees KPIs first
+        }
+
+        // 3. Scroll handling
         const explorer = document.getElementById('explorerCard');
         const isPhone  = window.matchMedia('(max-width: 640px), (hover:none) and (pointer:coarse)').matches;
-
-        // On tablet/desktop, open Summary; on phones, collapse it
-        if (sum) {
-          if (isPhone) {
-            sum.removeAttribute('open');   // hide Summary cards by default on phones
-          } else {
-            sum.open = true;
-          }
-        }
-
-        // On phones, after setting the month, jump the user down to Explorer
-        if (isPhone && explorer) {
-          explorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
+        // On phones, jump down to explorer if needed, or stay at top since KPIs are there now.
+        // Let's NOT auto-scroll on phone anymore since the KPIs are at the top.
+        
         if (typeof renderTable === 'function') {
           renderTable('tblActVsBud', res.actVsBud);
           renderTable('tblIncome',   res.income);
@@ -335,16 +267,14 @@ document.addEventListener('DOMContentLoaded', function () {
   function setStickyOffsets(){
     var root    = document.documentElement;
     var header  = document.querySelector('.app-header');
-    var seg     = document.getElementById('dxSeg');
     var filters = document.getElementById('dxFiltersOriginal');
 
     var headerH = header  ? header.getBoundingClientRect().height  : 0;
-    var segH    = seg     ? seg.getBoundingClientRect().height     : 0;
     var filtH   = filters ? filters.getBoundingClientRect().height  : 0;
 
     root.style.setProperty('--stickytop', Math.round(headerH) + 'px');
-    root.style.setProperty('--seg-h',     Math.round(segH)    + 'px');
     root.style.setProperty('--filters-h', Math.round(filtH)   + 'px');
+    // seg-h removed
   }
 
   setStickyOffsets();
@@ -363,8 +293,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!panel) return;
     var wrap = panel.querySelector('.table-wrap');
     if (!wrap) return;
-
-    // Remove any JS-set sizing/overflow so the page scrolls normally
     wrap.style.maxHeight = '';
     wrap.style.overflow  = '';
     wrap.style.webkitOverflowScrolling = '';
@@ -424,11 +352,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function applyMobileSummary(){
     if (!sum || !jump) return;
+    // We handle open/close logic in the button click now, but init state relies on this
     if (isPhone()){
-      sum.removeAttribute('open');
+      // sum.removeAttribute('open'); // Let HTML default decide or button click
       jump.classList.remove('hidden');
     }else{
-      sum.setAttribute('open', '');
+      // sum.setAttribute('open', ''); // Let user toggle freely
       jump.classList.add('hidden');
     }
   }
