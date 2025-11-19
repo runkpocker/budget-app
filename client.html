@@ -4,19 +4,35 @@ const qs = (id) => document.getElementById(id);
 
 // Loading counter for the modal
 let loadingCounter = 0;
+let retryTimer = null;
 
 // ---------- Modal controls ----------
 function showBusy() {
   loadingCounter++;
   const m = qs('busyModal');
-  if (m) m.classList.remove('hidden');
+  if (m) {
+    m.classList.remove('hidden');
+    document.body.classList.add('bb-busy'); // Styling hook
+    
+    // Start "slow network" hint timer
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => {
+      const t = m.querySelector('.modal-text');
+      if (loadingCounter > 0 && t) {
+        t.textContent = "This carrot patch is thicc 🥕🥕 — still fetching… try again if it stalls.";
+      }
+    }, 15000);
+  }
 }
+
 function hideBusy() {
   loadingCounter--;
   if (loadingCounter <= 0) {
     loadingCounter = 0;
+    clearTimeout(retryTimer);
     const m = qs('busyModal');
     if (m) m.classList.add('hidden');
+    document.body.classList.remove('bb-busy');
   }
 }
 
@@ -34,6 +50,47 @@ function updateBusyMessage() {
   else if (t)      setBusyMessage('Fetching transactions (1/2)…');
   else             setBusyMessage('Hang on to your Bunny Hairs, Daddy is getting the info...');
 }
+
+// ---- Summary renderer compatibility shim ----
+window.renderTable = function renderTableCompat(elOrId, rows) {
+  if (typeof renderSimpleTable === 'function') {
+    renderSimpleTable(elOrId, rows);
+  } else {
+    const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+    if (!el) return;
+    el.innerHTML = '';
+    (rows || []).forEach((r, i) => {
+      const tr = document.createElement('tr');
+      (r || []).forEach(c => {
+        const cell = document.createElement(i === 0 ? 'th' : 'td');
+        cell.textContent = c;
+        tr.appendChild(cell);
+      });
+      el.appendChild(tr);
+    });
+    if (!rows || !rows.length) el.innerHTML = '<tr><td><em>No data</em></td></tr>';
+  }
+};
+
+// ---------- Summary tables (left as-is) ----------
+function renderSimpleTable(el, rows) {
+  const tbl = typeof el === 'string' ? qs(el) : el;
+  tbl.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    tbl.innerHTML = '<tr><td><em>No data</em></td></tr>';
+    return;
+  }
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    r.forEach((c) => {
+      const cell = document.createElement(i === 0 ? 'th' : 'td');
+      cell.textContent = c;
+      tr.appendChild(cell);
+    });
+    tbl.appendChild(tr);
+  });
+}
+</script>
 
 // ---- Summary renderer compatibility shim ----
 // Summary's Set Month flow still calls `renderTable(elOrId, rows)`.
